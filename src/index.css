@@ -1,0 +1,170 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Brand Colors (Existing) */
+    --color-gold: #D4AF37;
+    --color-gold-hover: #B8962E;
+    --color-black: #0A0A0A;
+    --color-black-pure: #000000;
+    --color-surface: #1A1A1A;
+    --color-surface-light: #2A2A2A;
+    --color-text: #F5F5F5;
+    --color-text-dim: #A0A0A0;
+    --color-white: #FFFFFF;
+    --color-grey: #4A4A4A;
+
+    /* Transitions */
+    --transition-fast: 0.2s ease;
+    --transition-smooth: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Shadows */
+    --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.5);
+    --shadow-gold: 0 0 15px rgba(212, 175, 55, 0.3);
+
+    /* Spacing */
+    --container-px: 1.5rem;
+
+    /* Shadcn UI Variables (Mapped to match existing dark theme) */
+    --background: 0 0% 4%;
+    --foreground: 0 0% 96%;
+
+    --card: 0 0% 10%;
+    --card-foreground: 0 0% 96%;
+
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 96%;
+
+    --primary: 46 65% 52%;
+    --primary-foreground: 0 0% 0%;
+
+    --secondary: 0 0% 16%;
+    --secondary-foreground: 0 0% 96%;
+
+    --muted: 0 0% 16%;
+    --muted-foreground: 0 0% 63%;
+
+    --accent: 46 65% 52%;
+    --accent-foreground: 0 0% 0%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 16%;
+    --input: 0 0% 16%;
+    --ring: 46 65% 52%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 0 0% 4%;
+    --foreground: 0 0% 96%;
+    --card: 0 0% 10%;
+    --card-foreground: 0 0% 96%;
+    --primary: 46 65% 52%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 0 0% 16%;
+    --secondary-foreground: 0 0% 96%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-preto text-branco font-poppins antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-poppins;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-dourado via-yellow-400 to-dourado bg-clip-text text-transparent;
+  }
+
+  .glass-effect {
+    @apply bg-white/10 backdrop-blur-md border border-white/20;
+  }
+
+  .premium-gradient {
+    @apply bg-gradient-to-br from-preto via-gray-900 to-preto;
+  }
+
+  .shimmer-effect {
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(212, 175, 55, 0.3),
+        transparent);
+    background-size: 200% 100%;
+    @apply animate-shimmer;
+  }
+
+  .glass-card {
+    @apply bg-gray-900/60 backdrop-blur-md border border-white/10;
+  }
+
+  .glass-card-dark {
+    @apply bg-black/90 backdrop-blur-xl border-l border-white/10;
+  }
+
+  /* Original Classes Preserved */
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--container-px);
+  }
+
+  .btn-primary {
+    background-color: var(--color-gold);
+    color: var(--color-black-pure);
+    padding: 1rem 2rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: var(--transition-fast);
+  }
+
+  .btn-primary:hover {
+    background-color: var(--color-gold-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-gold);
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-preto;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-dourado rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-yellow-500;
+}
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
