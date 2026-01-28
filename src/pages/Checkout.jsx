@@ -143,16 +143,85 @@ const Checkout = () => {
 
             const docRef = await addDoc(collection(db, "orders"), orderData);
 
-            clearCart();
-            navigate('/success', {
-                state: {
-                    orderId: docRef.id,
-                    email: formData.email
+            // Integração Mercado Pago
+            if (formData.paymentMethod === 'pix' || formData.paymentMethod === 'card' || formData.paymentMethod === 'boleto') {
+                try {
+                    console.log("Iniciando pagamento com Mercado Pago..."); // Debug log
+
+                    const response = await fetch('/.netlify/functions/create-payment', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            items: cleanItems,
+                            payer: {
+                                name: formData.fullName,
+                                email: formData.email,
+                                cpf: formData.cpf.replace(/\D/g, ''),
+                                phone: formData.phone.replace(/\D/g, ''),
+                                address: {
+                                    street: formData.street,
+                                    number: formData.number,
+                                    cep: formData.cep.replace(/\D/g, '')
+                                }
+                            },
+                            orderId: docRef.id
+                        }),
+                    });
+
+                    if (!response.ok) {
+                        // Fallback para desenvolvimento local sem Netlify Dev
+                        if (response.status === 404) {
+                            console.warn("Backend de pagamento não encontrado. (Provavelmente rodando local sem 'netlify dev')");
+                            toast({
+                                title: 'Modo de Desenvolvimento',
+                                description: 'Simulando redirecionamento de pagamento...',
+                            });
+                            // Simula sucesso e vai para success page
+                            setTimeout(() => {
+                                clearCart();
+                                navigate('/success', { state: { orderId: docRef.id, email: formData.email } });
+                            }, 2000);
+                            return;
+                        }
+                        const errText = await response.text();
+                        console.error("Erro do servidor:", errText);
+                        throw new Error('Falha na resposta do servidor de pagamento');
+                    }
+
+                    const paymentData = await response.json();
+
+                    if (paymentData.init_point) {
+                        clearCart();
+                        window.location.href = paymentData.init_point;
+                    } else {
+                        throw new Error('Link de pagamento não recebido');
+                    }
+
+                } catch (paymentError) {
+                    console.error("Erro detalhado no pagamento:", paymentError);
+                    toast({
+                        title: 'Erro no Pagamento',
+                        description: 'Pedido salvo, mas falha ao abrir pagamento. Entre em contato.',
+                        variant: 'destructive',
+                    });
+                    // Fallback para sucesso para não perder o pedido
+                    navigate('/success', { state: { orderId: docRef.id, email: formData.email, paymentError: true } });
                 }
-            });
+            } else {
+                // Outros métodos
+                clearCart();
+                navigate('/success', {
+                    state: {
+                        orderId: docRef.id,
+                        email: formData.email
+                    }
+                });
+            }
 
         } catch (error) {
-            console.error("Erro no checkout:", error);
+            console.error("Erro geral no checkout:", error);
             setIsProcessing(false);
             toast({
                 title: 'Erro ao processar pedido',

@@ -9,7 +9,7 @@ const WhatsAppButton = () => {
     // Exemplo: 5511999999999 (55 = Brasil, 11 = DDD, 999999999 = número)
     const phoneNumber = '5511999999999'; // ALTERE ESTE NÚMERO
     const message = 'Olá! Vim do site A Fabrica Cria e gostaria de mais informações.';
-    
+
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
 
     const handleClick = () => {
@@ -51,11 +51,11 @@ const WhatsAppButton = () => {
                 >
                     {/* Efeito de pulso */}
                     <span className="absolute inset-0 rounded-full bg-[#25D366] animate-ping opacity-20"></span>
-                    
+
                     {/* Ícone do WhatsApp */}
                     <div className="relative">
-                        <MessageCircle 
-                            size={28} 
+                        <MessageCircle
+                            size={28}
                             className={`transition-transform duration-300 ${isHovered ? 'rotate-12' : ''}`}
                             strokeWidth={2}
                         />
@@ -69,22 +69,7 @@ const WhatsAppButton = () => {
             </div>
 
             {/* Estilos adicionais para animações */}
-            <style jsx>{`
-                @keyframes slide-in-from-right {
-                    from {
-                        opacity: 0;
-                        transform: translateX(20px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateX(0);
-                    }
-                }
-
-                .animate-in {
-                    animation: slide-in-from-right 0.3s ease-out;
-                }
-            `}</style>
+            {/* Removed invalid style tag. Animation relied on Tailwind built-ins or standard CSS */}
         </>
     );
 };
