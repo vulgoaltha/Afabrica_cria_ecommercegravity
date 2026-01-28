@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - A Fabrica Cria</title>
+    <!-- Import Map para funcionar modules no navegador -->
+    <script type="importmap">
+    {
+        "imports": {
+            "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
+            "firebase/firestore": "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js",
+            "firebase/auth": "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js",
+            "firebase/storage": "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js"
+        }
+    }
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Firebase SDK (Modular) -->
+    <!-- Nota: Como estamos usando ES Modules, importamos no script main abaixo -->
+</head>
+
+<body class="bg-gray-900 text-white h-screen flex items-center justify-center">
+
+    <div class="bg-gray-800 p-8 rounded-lg shadow-2xl w-full max-w-md border border-gray-700">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-yellow-500 mb-2">Painel Admin</h1>
+            <p class="text-gray-400">Acesse para gerenciar sua loja</p>
+        </div>
+
+        <form id="login-form" class="space-y-6">
+            <div>
+                <label class="block text-gray-400 mb-2 text-sm">Email</label>
+                <div class="relative">
+                    <span class="absolute left-3 top-3 text-gray-500"><i class="fas fa-envelope"></i></span>
+                    <input type="email" id="email" required
+                        class="w-full bg-gray-700 border border-gray-600 rounded px-10 py-2 focus:outline-none focus:border-yellow-500 text-white placeholder-gray-500"
+                        placeholder="admin@exemplo.com">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-gray-400 mb-2 text-sm">Senha</label>
+                <div class="relative">
+                    <span class="absolute left-3 top-3 text-gray-500"><i class="fas fa-lock"></i></span>
+                    <input type="password" id="password" required
+                        class="w-full bg-gray-700 border border-gray-600 rounded px-10 py-2 focus:outline-none focus:border-yellow-500 text-white placeholder-gray-500"
+                        placeholder="••••••••">
+                </div>
+            </div>
+
+            <button type="submit" id="login-btn"
+                class="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 rounded transition duration-200 transform hover:scale-[1.02]">
+                ENTRAR
+            </button>
+
+            <button type="button" id="google-btn"
+                class="w-full bg-white hover:bg-gray-100 text-gray-800 font-bold py-3 rounded transition duration-200 flex items-center justify-center gap-2">
+                <i class="fab fa-google"></i> Entrar com Google
+            </button>
+        </form>
+
+        <p class="mt-6 text-center text-xs text-gray-500">
+            Acesso restrito a administradores.
+        </p>
+    </div>
+
+    <!-- Logic -->
+    <script type="module">
+        import { loginEmail, loginGoogle } from '../js/auth.js';
+
+        const loginForm = document.getElementById('login-form');
+        const googleBtn = document.getElementById('google-btn');
+        const submitBtn = document.getElementById('login-btn');
+
+        // Login Email/Senha
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            setLoading(true);
+
+            try {
+                await loginEmail(email, password);
+                window.location.href = '/admin/dashboard.html';
+            } catch (error) {
+                console.error(error);
+                alert('Erro ao fazer login: ' + error.message);
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        // Login Google
+        googleBtn.addEventListener('click', async () => {
+            try {
+                await loginGoogle();
+                window.location.href = '/admin/dashboard.html';
+            } catch (error) {
+                console.error(error);
+                alert('Erro no login Google: ' + error.message);
+            }
+        });
+
+        function setLoading(isLoading) {
+            if (isLoading) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Entrando...';
+            } else {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'ENTRAR';
+            }
+        }
+    </script>
+</body>
+
+</html>

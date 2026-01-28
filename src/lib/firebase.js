@@ -2,9 +2,9 @@ import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getStorage } from "firebase/storage";
+import { getAnalytics } from "firebase/analytics";
 
-// ===== CONFIG =====
-
+// CONFIGURAÇÃO DO FIREBASE
 const firebaseConfig = {
     apiKey: "AIzaSyCd9i7k3EywIK56nQy9alVmf_DbY6OV1WI",
     authDomain: "afabricacriaecommercegravity.firebaseapp.com",
@@ -15,12 +15,13 @@ const firebaseConfig = {
     measurementId: "G-9DVJQW8FRD"
 };
 
-// ===== INIT =====
-
+// Inicializa o Firebase
 const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 
+// Exporta as instâncias dos serviços
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 
-console.log("🔥 Firebase (Admin) conectado");
+console.log("🔥 Firebase (React) inicializado");

@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { CreditCard, CheckCircle } from 'lucide-react';
+import { CreditCard, CheckCircle, Truck, MapPin, User, FileText, Smartphone, Mail, CreditCard as IconCard, QrCode, Barcode } from 'lucide-react';
 import { useCart } from '@/hooks/useCart';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
-import { initializeCheckout } from '@/api/EcommerceApi';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 const Checkout = () => {
     const navigate = useNavigate();
@@ -17,18 +17,26 @@ const Checkout = () => {
     const [isProcessing, setIsProcessing] = useState(false);
 
     const [formData, setFormData] = useState({
+        fullName: '',
+        cpf: '',
+        phone: '',
+        email: '',
         cep: '',
         street: '',
         number: '',
         complement: '',
         city: '',
         state: '',
-        paymentMethod: 'credit-card',
+        paymentMethod: 'pix', // pix, card, boleto
     });
 
     const [errors, setErrors] = useState({});
 
-    const total = getCartTotal();
+    // Parsing total safely
+    const totalStr = getCartTotal().replace('R$', '').trim();
+    const subtotal = parseFloat(totalStr.replace(/\./g, '').replace(',', '.')) || 0;
+    const shipping = 0; // Frete grátis por enquanto
+    const grandTotal = subtotal + shipping;
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -38,11 +46,36 @@ const Checkout = () => {
         }
     };
 
+    const handleCepBlur = async () => {
+        const cep = formData.cep.replace(/\D/g, '');
+        if (cep.length === 8) {
+            try {
+                const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+                const data = await response.json();
+                if (!data.erro) {
+                    setFormData(prev => ({
+                        ...prev,
+                        street: data.logradouro,
+                        city: data.localidade,
+                        state: data.uf
+                    }));
+                } else {
+                    toast({ title: 'CEP não encontrado', variant: 'destructive' });
+                }
+            } catch (error) {
+                console.error("Erro ViaCEP", error);
+            }
+        }
+    };
+
     const validateForm = () => {
         const newErrors = {};
-        // Basic validation for demo purposes
+        if (!formData.fullName.trim()) newErrors.fullName = 'Nome completo é obrigatório';
+        if (!formData.cpf.trim()) newErrors.cpf = 'CPF é obrigatório';
+        if (!formData.phone.trim()) newErrors.phone = 'Telefone é obrigatório';
+        if (!formData.email.trim()) newErrors.email = 'Email é obrigatório';
         if (!formData.cep.trim()) newErrors.cep = 'CEP é obrigatório';
-        if (!formData.street.trim()) newErrors.street = 'Rua é obrigatória';
+        if (!formData.street.trim()) newErrors.street = 'Endereço é obrigatório';
         if (!formData.number.trim()) newErrors.number = 'Número é obrigatório';
         if (!formData.city.trim()) newErrors.city = 'Cidade é obrigatória';
         if (!formData.state.trim()) newErrors.state = 'Estado é obrigatório';
@@ -66,23 +99,64 @@ const Checkout = () => {
         setIsProcessing(true);
 
         try {
-            const items = cartItems.map(item => ({
-                variant_id: item.variant.id,
-                quantity: item.quantity,
-            }));
+            // Preparar itens sanitizados
+            const cleanItems = cartItems.map(item => {
+                let finalPrice = 0;
+                if (typeof item.variant.price === 'number') finalPrice = item.variant.price;
+                else if (typeof item.variant.price_in_cents === 'number') finalPrice = item.variant.price_in_cents / 100;
+                else if (typeof item.variant.sale_price_in_cents === 'number') finalPrice = item.variant.sale_price_in_cents / 100;
+                if (isNaN(finalPrice)) finalPrice = 0;
 
-            const successUrl = `${window.location.origin}/success`;
-            const cancelUrl = window.location.href;
+                return {
+                    productId: String(item.product.id || item.product._id || 'N/A'),
+                    title: String(item.product.title || 'Produto Sem Nome'),
+                    price: finalPrice,
+                    quantity: Number(item.quantity) || 1,
+                    size: String(item.variant.title || 'U'),
+                    image: String(item.product.image || '')
+                };
+            });
 
-            const { url } = await initializeCheckout({ items, successUrl, cancelUrl });
+            const orderData = {
+                customer: {
+                    name: formData.fullName,
+                    cpf: formData.cpf,
+                    phone: formData.phone,
+                    email: formData.email,
+                    address: {
+                        street: formData.street,
+                        number: formData.number,
+                        complement: formData.complement,
+                        city: formData.city,
+                        state: formData.state,
+                        cep: formData.cep
+                    }
+                },
+                items: cleanItems,
+                paymentMethod: formData.paymentMethod,
+                subtotal: subtotal,
+                shipping: shipping,
+                total: grandTotal,
+                status: 'Aguardando pagamento',
+                createdAt: serverTimestamp()
+            };
+
+            const docRef = await addDoc(collection(db, "orders"), orderData);
 
             clearCart();
-            window.location.href = url;
+            navigate('/success', {
+                state: {
+                    orderId: docRef.id,
+                    email: formData.email
+                }
+            });
+
         } catch (error) {
+            console.error("Erro no checkout:", error);
             setIsProcessing(false);
             toast({
-                title: 'Erro no Checkout',
-                description: 'Houve um problema ao iniciar o checkout. Por favor, tente novamente.',
+                title: 'Erro ao processar pedido',
+                description: 'Verifique sua conexão e tente novamente.',
                 variant: 'destructive',
             });
         }
@@ -99,7 +173,7 @@ const Checkout = () => {
                 <title>Finalizar Compra - A Fabrica Cria</title>
             </Helmet>
 
-            <div className="min-h-screen bg-preto pt-24 pb-16">
+            <div className="min-h-screen bg-black pt-24 pb-16 text-white">
                 <div className="container mx-auto px-4 max-w-6xl">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
@@ -107,179 +181,231 @@ const Checkout = () => {
                         transition={{ duration: 0.6 }}
                         className="mb-8"
                     >
-                        <h1 className="font-poppins text-4xl md:text-5xl font-bold">
-                            Finalizar <span className="text-gradient">Compra</span>
+                        <h1 className="font-poppins text-3xl md:text-4xl font-bold uppercase tracking-wider">
+                            Finalizar <span className="text-[var(--color-gold)]">Compra</span>
                         </h1>
                     </motion.div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         {/* Checkout Form */}
-                        <div className="lg:col-span-2">
-                            <form onSubmit={handleSubmit} className="space-y-8">
-                                {/* Shipping Address */}
-                                <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6 space-y-6">
-                                    <h2 className="font-poppins text-2xl font-semibold">Endereço de Entrega</h2>
+                        <div className="lg:col-span-2 space-y-8">
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label htmlFor="cep" className="block font-semibold mb-2">
-                                                CEP *
-                                            </label>
-                                            <Input
-                                                id="cep"
-                                                name="cep"
-                                                value={formData.cep}
-                                                onChange={handleChange}
-                                                error={errors.cep}
-                                                placeholder="12345-678"
-                                            />
-                                            {errors.cep && (
-                                                <p className="text-red-500 text-sm mt-1">{errors.cep}</p>
-                                            )}
-                                        </div>
-
-                                        <div className="md:col-span-2">
-                                            <label htmlFor="street" className="block font-semibold mb-2">
-                                                Rua *
-                                            </label>
-                                            <Input
-                                                id="street"
-                                                name="street"
-                                                value={formData.street}
-                                                onChange={handleChange}
-                                                error={errors.street}
-                                                placeholder="Rua Exemplo"
-                                            />
-                                            {errors.street && (
-                                                <p className="text-red-500 text-sm mt-1">{errors.street}</p>
-                                            )}
-                                        </div>
-
-                                        <div>
-                                            <label htmlFor="number" className="block font-semibold mb-2">
-                                                Número *
-                                            </label>
-                                            <Input
-                                                id="number"
-                                                name="number"
-                                                value={formData.number}
-                                                onChange={handleChange}
-                                                error={errors.number}
-                                                placeholder="123"
-                                            />
-                                            {errors.number && (
-                                                <p className="text-red-500 text-sm mt-1">{errors.number}</p>
-                                            )}
-                                        </div>
-
-                                        <div>
-                                            <label htmlFor="complement" className="block font-semibold mb-2">
-                                                Complemento
-                                            </label>
-                                            <Input
-                                                id="complement"
-                                                name="complement"
-                                                value={formData.complement}
-                                                onChange={handleChange}
-                                                placeholder="Apto 45"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label htmlFor="city" className="block font-semibold mb-2">
-                                                Cidade *
-                                            </label>
-                                            <Input
-                                                id="city"
-                                                name="city"
-                                                value={formData.city}
-                                                onChange={handleChange}
-                                                error={errors.city}
-                                                placeholder="São Paulo"
-                                            />
-                                            {errors.city && (
-                                                <p className="text-red-500 text-sm mt-1">{errors.city}</p>
-                                            )}
-                                        </div>
-
-                                        <div>
-                                            <label htmlFor="state" className="block font-semibold mb-2">
-                                                Estado *
-                                            </label>
-                                            <Input
-                                                id="state"
-                                                name="state"
-                                                value={formData.state}
-                                                onChange={handleChange}
-                                                error={errors.state}
-                                                placeholder="SP"
-                                                maxLength={2}
-                                            />
-                                            {errors.state && (
-                                                <p className="text-red-500 text-sm mt-1">{errors.state}</p>
-                                            )}
-                                        </div>
+                            {/* Dados Pessoais */}
+                            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-6">
+                                <h2 className="text-xl font-bold flex items-center gap-2 uppercase tracking-wide">
+                                    <User className="text-[var(--color-gold)]" size={20} /> Dados Pessoais
+                                </h2>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="md:col-span-2">
+                                        <label className="text-xs text-gray-400 uppercase font-bold mb-1 block">Nome Completo</label>
+                                        <Input
+                                            name="fullName"
+                                            value={formData.fullName}
+                                            onChange={handleChange}
+                                            className="bg-gray-800 border-gray-700 text-white"
+                                            placeholder="Ex: João da Silva"
+                                        />
+                                        {errors.fullName && <p className="text-red-500 text-xs mt-1">{errors.fullName}</p>}
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-gray-400 uppercase font-bold mb-1 block">CPF</label>
+                                        <Input
+                                            name="cpf"
+                                            value={formData.cpf}
+                                            onChange={handleChange}
+                                            className="bg-gray-800 border-gray-700 text-white"
+                                            placeholder="000.000.000-00"
+                                        />
+                                        {errors.cpf && <p className="text-red-500 text-xs mt-1">{errors.cpf}</p>}
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-gray-400 uppercase font-bold mb-1 block">Telefone / WhatsApp</label>
+                                        <Input
+                                            name="phone"
+                                            value={formData.phone}
+                                            onChange={handleChange}
+                                            className="bg-gray-800 border-gray-700 text-white"
+                                            placeholder="(11) 99999-9999"
+                                        />
+                                        {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className="text-xs text-gray-400 uppercase font-bold mb-1 block">Email</label>
+                                        <Input
+                                            name="email"
+                                            type="email"
+                                            value={formData.email}
+                                            onChange={handleChange}
+                                            className="bg-gray-800 border-gray-700 text-white"
+                                            placeholder="joao@email.com"
+                                        />
+                                        {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
                                     </div>
                                 </div>
+                            </div>
 
-                                {/* Payment Method */}
-                                <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6 space-y-6">
-                                    <h2 className="font-poppins text-2xl font-semibold">Forma de Pagamento</h2>
-                                    <p className="text-gray-400">Você será redirecionado para um ambiente seguro para concluir o pagamento.</p>
+                            {/* Endereço */}
+                            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-6">
+                                <h2 className="text-xl font-bold flex items-center gap-2 uppercase tracking-wide">
+                                    <MapPin className="text-[var(--color-gold)]" size={20} /> Endereço de Entrega
+                                </h2>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-xs text-gray-400 uppercase font-bold mb-1 block">CEP</label>
+                                        <Input
+                                            name="cep"
+                                            value={formData.cep}
+                                            onChange={handleChange}
+                                            onBlur={handleCepBlur}
+                                            className="bg-gray-800 border-gray-700 text-white"
+                                            placeholder="00000-000"
+                                        />
+                                        {errors.cep && <p className="text-red-500 text-xs mt-1">{errors.cep}</p>}
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className="text-xs text-gray-400 uppercase font-bold mb-1 block">Rua / Logradouro</label>
+                                        <Input
+                                            name="street"
+                                            value={formData.street}
+                                            onChange={handleChange}
+                                            className="bg-gray-800 border-gray-700 text-white"
+                                        />
+                                        {errors.street && <p className="text-red-500 text-xs mt-1">{errors.street}</p>}
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-gray-400 uppercase font-bold mb-1 block">Número</label>
+                                        <Input
+                                            name="number"
+                                            value={formData.number}
+                                            onChange={handleChange}
+                                            className="bg-gray-800 border-gray-700 text-white"
+                                        />
+                                        {errors.number && <p className="text-red-500 text-xs mt-1">{errors.number}</p>}
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-gray-400 uppercase font-bold mb-1 block">Complemento</label>
+                                        <Input
+                                            name="complement"
+                                            value={formData.complement}
+                                            onChange={handleChange}
+                                            className="bg-gray-800 border-gray-700 text-white"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-gray-400 uppercase font-bold mb-1 block">Cidade</label>
+                                        <Input
+                                            name="city"
+                                            value={formData.city}
+                                            onChange={handleChange}
+                                            className="bg-gray-800 border-gray-700 text-white"
+                                        />
+                                        {errors.city && <p className="text-red-500 text-xs mt-1">{errors.city}</p>}
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-gray-400 uppercase font-bold mb-1 block">Estado</label>
+                                        <Input
+                                            name="state"
+                                            value={formData.state}
+                                            onChange={handleChange}
+                                            className="bg-gray-800 border-gray-700 text-white"
+                                            maxLength={2}
+                                        />
+                                        {errors.state && <p className="text-red-500 text-xs mt-1">{errors.state}</p>}
+                                    </div>
                                 </div>
-                            </form>
+                            </div>
+
+                            {/* Pagamento */}
+                            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-6">
+                                <h2 className="text-xl font-bold flex items-center gap-2 uppercase tracking-wide">
+                                    <CreditCard className="text-[var(--color-gold)]" size={20} /> Pagamento
+                                </h2>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData(p => ({ ...p, paymentMethod: 'pix' }))}
+                                        className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${formData.paymentMethod === 'pix'
+                                                ? 'bg-[var(--color-gold)] text-black border-[var(--color-gold)] font-bold'
+                                                : 'bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-700'
+                                            }`}
+                                    >
+                                        <QrCode size={24} />
+                                        <span>PIX</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData(p => ({ ...p, paymentMethod: 'card' }))}
+                                        className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${formData.paymentMethod === 'card'
+                                                ? 'bg-[var(--color-gold)] text-black border-[var(--color-gold)] font-bold'
+                                                : 'bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-700'
+                                            }`}
+                                    >
+                                        <IconCard size={24} />
+                                        <span>Cartão</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData(p => ({ ...p, paymentMethod: 'boleto' }))}
+                                        className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${formData.paymentMethod === 'boleto'
+                                                ? 'bg-[var(--color-gold)] text-black border-[var(--color-gold)] font-bold'
+                                                : 'bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-700'
+                                            }`}
+                                    >
+                                        <FileText size={24} />
+                                        <span>Boleto</span>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
 
                         {/* Order Summary */}
                         <div className="lg:col-span-1">
-                            <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6 sticky top-24 space-y-6">
-                                <h2 className="font-poppins text-2xl font-semibold">Resumo do Pedido</h2>
+                            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 sticky top-24 space-y-6">
+                                <h2 className="text-xl font-bold uppercase tracking-wide">Resumo</h2>
 
-                                {/* Products */}
-                                <div className="space-y-3 max-h-64 overflow-y-auto">
+                                <div className="space-y-4 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
                                     {cartItems.map((item) => (
-                                        <div
-                                            key={item.variant.id}
-                                            className="flex gap-3 pb-3 border-b border-gray-800"
-                                        >
+                                        <div key={item.variant.id} className="flex gap-3 pb-3 border-b border-gray-800 last:border-0">
                                             <img
                                                 src={item.product.image}
                                                 alt={item.product.title}
-                                                className="w-16 h-16 rounded object-cover"
+                                                className="w-14 h-14 rounded object-cover"
                                             />
                                             <div className="flex-1">
-                                                <p className="font-semibold text-sm">{item.product.title}</p>
-                                                <p className="text-gray-400 text-xs">
+                                                <p className="font-bold text-xs uppercase line-clamp-1">{item.product.title}</p>
+                                                <p className="text-gray-400 text-[10px] uppercase">
                                                     {item.variant.title} x {item.quantity}
                                                 </p>
+                                                <p className="text-[var(--color-gold)] text-xs font-bold mt-1">
+                                                    {item.variant.sale_price_formatted || item.variant.price_formatted}
+                                                </p>
                                             </div>
-                                            <span className="text-dourado font-semibold">
-                                                {item.variant.sale_price_formatted || item.variant.price_formatted}
-                                            </span>
                                         </div>
                                     ))}
                                 </div>
 
-                                {/* Totals */}
-                                <div className="space-y-3 py-4 border-y border-gray-800">
-                                    <div className="flex justify-between text-2xl font-bold">
+                                <div className="space-y-2 pt-4 border-t border-gray-800 text-sm">
+                                    <div className="flex justify-between text-gray-400">
+                                        <span>Subtotal</span>
+                                        <span>R$ {subtotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                                    </div>
+                                    <div className="flex justify-between text-gray-400">
+                                        <span>Frete</span>
+                                        <span>{shipping === 0 ? 'Grátis' : `R$ ${shipping.toFixed(2)}`}</span>
+                                    </div>
+                                    <div className="flex justify-between text-xl font-bold text-white pt-2 border-t border-gray-800 mt-2">
                                         <span>Total</span>
-                                        <span className="text-dourado">{total}</span>
+                                        <span className="text-[var(--color-gold)]">R$ {grandTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                                     </div>
                                 </div>
 
                                 <Button
                                     onClick={handleSubmit}
                                     disabled={isProcessing}
-                                    size="lg"
-                                    className="w-full bg-dourado hover:bg-yellow-500 text-preto font-semibold text-lg py-6"
+                                    className="w-full bg-[var(--color-gold)] hover:bg-yellow-500 text-black font-black py-6 text-lg rounded-xl uppercase tracking-wider"
                                 >
-                                    {isProcessing ? 'Processando...' : 'Confirmar Pedido'}
+                                    {isProcessing ? 'Processando...' : 'Finalizar Pedido'}
                                 </Button>
-
-                                <p className="text-sm text-gray-500 text-center">
-                                    * Campos obrigatórios
-                                </p>
                             </div>
                         </div>
                     </div>

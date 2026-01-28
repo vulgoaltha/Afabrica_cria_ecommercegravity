@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pedidos - Admin</title>
+    <script type="importmap">
+    {
+        "imports": {
+            "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
+            "firebase/firestore": "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js",
+            "firebase/auth": "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js",
+            "firebase/storage": "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js"
+        }
+    }
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-900 text-white font-sans antialiased">
+    <div class="flex h-screen overflow-hidden">
+
+        <!-- Sidebar (Igual dashboard) -->
+        <aside class="w-64 bg-gray-800 border-r border-gray-700 hidden md:flex flex-col">
+            <div class="p-6 border-b border-gray-700">
+                <h1 class="text-2xl font-bold text-yellow-500">ADMIN</h1>
+            </div>
+            <nav class="flex-grow p-4 space-y-2">
+                <a href="dashboard.html"
+                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-700 hover:text-white rounded-lg transition">
+                    <i class="fas fa-chart-line"></i> Dashboard
+                </a>
+                <a href="pedidos.html"
+                    class="flex items-center gap-3 px-4 py-3 bg-gray-700 text-white rounded-lg transition">
+                    <i class="fas fa-box"></i> Pedidos
+                </a>
+                <a href="produtos.html"
+                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-700 hover:text-white rounded-lg transition">
+                    <i class="fas fa-tshirt"></i> Produtos
+                </a>
+                <a href="reviews.html"
+                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-700 hover:text-white rounded-lg transition">
+                    <i class="fas fa-star"></i> Avaliações
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-900 p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">Gerenciar Pedidos</h2>
+                    <div class="flex gap-2">
+                        <input type="text" placeholder="Buscar cliente..."
+                            class="bg-gray-800 border-gray-700 rounded px-4 py-2">
+                    </div>
+                </div>
+
+                <div class="bg-gray-800 rounded-xl border border-gray-700 shadow-lg overflow-hidden">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-700/50 text-gray-400 text-xs uppercase">
+                            <tr>
+                                <th class="px-6 py-4">ID</th>
+                                <th class="px-6 py-4">Cliente</th>
+                                <th class="px-6 py-4">Itens</th>
+                                <th class="px-6 py-4">Total</th>
+                                <th class="px-6 py-4">Status</th>
+                                <th class="px-6 py-4">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-700" id="orders-body">
+                            <!-- JS popula aqui -->
+                        </tbody>
+                    </table>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal Detalhes -->
+    <dialog id="order-modal"
+        class="bg-gray-800 text-white rounded-xl shadow-2xl p-0 w-full max-w-2xl backdrop:bg-black/80">
+        <div class="p-6 border-b border-gray-700 flex justify-between">
+            <h3 class="font-bold text-xl">Detalhes do Pedido</h3>
+            <button onclick="document.getElementById('order-modal').close()" class="text-gray-400 hover:text-white"><i
+                    class="fas fa-times"></i></button>
+        </div>
+        <div class="p-6 space-y-4" id="modal-content">
+            <!-- Detalhes do pedido aqui -->
+        </div>
+        <div class="p-6 border-t border-gray-700 flex justify-end gap-2">
+            <button onclick="updateStatus('Recebido')"
+                class="px-4 py-2 bg-blue-600 rounded hover:bg-blue-700">Recebido</button>
+            <button onclick="updateStatus('Produção')"
+                class="px-4 py-2 bg-yellow-600 rounded hover:bg-yellow-700">Produção</button>
+            <button onclick="updateStatus('Enviado')"
+                class="px-4 py-2 bg-purple-600 rounded hover:bg-purple-700">Enviado</button>
+            <button onclick="updateStatus('Entregue')"
+                class="px-4 py-2 bg-green-600 rounded hover:bg-green-700">Entregue</button>
+        </div>
+    </dialog>
+
+    <script type="module">
+        import { protegerAdmin } from '../js/auth.js';
+        import { db } from '../js/firebase.js';
+        import { collection, query, orderBy, onSnapshot, doc, updateDoc } from "firebase/firestore";
+
+        let currentOrderId = null;
+
+        protegerAdmin(() => {
+            loadOrders();
+        });
+
+        function loadOrders() {
+            const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
+
+            // Real-time listener
+            onSnapshot(q, (snapshot) => {
+                const tbody = document.getElementById('orders-body');
+                tbody.innerHTML = '';
+
+                snapshot.forEach((docSnap) => {
+                    const order = docSnap.data();
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-gray-700/50 transition";
+
+                    const itemsSummary = order.items ? order.items.map(i => `${i.quantity}x ${i.title}`).join(', ') : 'Sem itens';
+
+                    tr.innerHTML = `
+                        <td class="px-6 py-4 font-mono text-sm text-gray-400">#${docSnap.id.slice(0, 6)}</td>
+                        <td class="px-6 py-4">
+                            <div class="font-medium">${order.customerName || 'Cliente'}</div>
+                            <div class="text-xs text-gray-500">${order.whatsapp || ''}</div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-300 truncate max-w-xs" title="${itemsSummary}">
+                            ${itemsSummary}
+                        </td>
+                        <td class="px-6 py-4 font-bold text-green-400">R$ ${order.total?.toFixed(2)}</td>
+                        <td class="px-6 py-4">
+                            <span class="px-2 py-1 text-xs rounded bg-gray-700 border border-gray-600">
+                                ${order.status || 'Pendente'}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <button onclick="window.openOrder('${docSnap.id}')" class="text-yellow-500 hover:text-yellow-400"><i class="fas fa-eye"></i></button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            });
+        }
+
+        // Expor função para o HTML
+        window.openOrder = async (id) => {
+            currentOrderId = id;
+            const docSnap = await firebase.firestore().collection('orders').doc(id).get(); // Usando global firebase se necessario, ou buscar do snapshot local
+            // Para simplicidade aqui, vamos assumir que temos os dados ou buscar de novo
+            // Idealmente usariamos o dado ja carregado
+
+            // Recarregando só pra garantir (ou passar objeto)
+            // Como estamos em module, window não acessa funcoes internas diretamente sem expor.
+            // Vamos implementar uma busca simples
+
+            // Nota: Se `db` nao estiver no window, usar window.db que exportamos no firebase.js
+            const orderDoc = await window.db.collection('orders').doc(id).get();
+            const order = orderDoc.data();
+
+            const modal = document.getElementById('order-modal');
+            const content = document.getElementById('modal-content');
+
+            content.innerHTML = `
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <p class="text-gray-400 text-xs">Cliente</p>
+                        <p class="font-bold">${order.customerName}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-400 text-xs">WhatsApp</p>
+                        <p>${order.whatsapp}</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-xs mb-2">Itens</p>
+                    <div class="space-y-2">
+                        ${order.items.map(item => `
+                            <div class="flex justify-between bg-gray-700/50 p-2 rounded">
+                                <span>${item.quantity}x ${item.title} (${item.size || 'U'})</span>
+                                <span>R$ ${item.price}</span>
+                            </div>
+                            ${item.customName ? `<div class="text-xs text-gray-400 ml-2">Personalização: ${item.customName} ${item.customNumber || ''}</div>` : ''}
+                        `).join('')}
+                    </div>
+                </div>
+                 <div class="mt-4 flex justify-between items-center border-t border-gray-700 pt-4">
+                    <span class="font-bold text-lg">Total</span>
+                    <span class="font-bold text-xl text-yellow-500">R$ ${order.total?.toFixed(2)}</span>
+                </div>
+            `;
+
+            modal.showModal();
+        };
+
+        window.updateStatus = async (status) => {
+            if (!currentOrderId) return;
+            try {
+                await window.db.collection('orders').doc(currentOrderId).update({ status });
+                document.getElementById('order-modal').close();
+                alert(`Status atualizado para: ${status}`);
+            } catch (error) {
+                console.error(error);
+                alert("Erro ao atualizar status");
+            }
+        };
+    </script>
+</body>
+
+</html>

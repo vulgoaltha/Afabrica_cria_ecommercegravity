@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avaliações - Admin</title>
+    <script type="importmap">
+    {
+        "imports": {
+            "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
+            "firebase/firestore": "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js",
+            "firebase/auth": "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js",
+            "firebase/storage": "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js"
+        }
+    }
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-900 text-white font-sans antialiased">
+    <div class="flex h-screen overflow-hidden">
+
+        <!-- Sidebar -->
+        <aside class="w-64 bg-gray-800 border-r border-gray-700 hidden md:flex flex-col">
+            <div class="p-6 border-b border-gray-700">
+                <h1 class="text-2xl font-bold text-yellow-500">ADMIN</h1>
+            </div>
+            <nav class="flex-grow p-4 space-y-2">
+                <a href="dashboard.html"
+                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-700 hover:text-white rounded-lg transition">
+                    <i class="fas fa-chart-line"></i> Dashboard
+                </a>
+                <a href="pedidos.html"
+                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-700 hover:text-white rounded-lg transition">
+                    <i class="fas fa-box"></i> Pedidos
+                </a>
+                <a href="produtos.html"
+                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-700 hover:text-white rounded-lg transition">
+                    <i class="fas fa-tshirt"></i> Produtos
+                </a>
+                <a href="reviews.html"
+                    class="flex items-center gap-3 px-4 py-3 bg-gray-700 text-white rounded-lg transition">
+                    <i class="fas fa-star"></i> Avaliações
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-900 p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">Moderar Avaliações</h2>
+                </div>
+
+                <div class="bg-gray-800 rounded-xl border border-gray-700 shadow-lg overflow-hidden">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-700/50 text-gray-400 text-xs uppercase">
+                            <tr>
+                                <th class="px-6 py-4">Produto ID</th>
+                                <th class="px-6 py-4">Nota</th>
+                                <th class="px-6 py-4">Comentário</th>
+                                <th class="px-6 py-4">Foto</th>
+                                <th class="px-6 py-4">Status</th>
+                                <th class="px-6 py-4">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-700" id="reviews-body">
+                            <!-- JS popula aqui -->
+                        </tbody>
+                    </table>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal Imagem -->
+    <dialog id="image-modal" class="bg-black text-white p-0 backdrop:bg-black/90 max-h-[90vh]">
+        <div class="relative">
+            <button onclick="document.getElementById('image-modal').close()"
+                class="absolute top-2 right-2 bg-black/50 rounded-full p-2 hover:bg-white/20"><i
+                    class="fas fa-times"></i></button>
+            <img id="modal-img-src" src="" class="max-w-full max-h-[80vh] object-contain">
+        </div>
+    </dialog>
+
+    <script type="module">
+        import { protegerAdmin } from '../js/auth.js';
+        import { db } from '../js/firebase.js';
+        import { collection, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc } from "firebase/firestore";
+
+        protegerAdmin(() => {
+            loadReviews();
+        });
+
+        function loadReviews() {
+            const q = query(collection(db, "reviews"), orderBy("createdAt", "desc"));
+
+            onSnapshot(q, (snapshot) => {
+                const tbody = document.getElementById('reviews-body');
+                tbody.innerHTML = '';
+
+                snapshot.forEach((docSnap) => {
+                    const r = docSnap.data();
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-gray-700/50 transition";
+
+                    const stars = Array(5).fill(0).map((_, i) =>
+                        `<i class="fas fa-star ${i < r.rating ? 'text-yellow-500' : 'text-gray-600'}"></i>`
+                    ).join('');
+
+                    tr.innerHTML = `
+                        <td class="px-6 py-4 font-mono text-sm text-gray-400">#${r.productId ? r.productId.slice(0, 6) : 'N/A'}</td>
+                        <td class="px-6 py-4 text-xs">
+                             <div class="flex gap-1">${stars}</div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-300 max-w-xs truncate" title="${r.comment}">
+                            ${r.comment}
+                        </td>
+                        <td class="px-6 py-4">
+                            ${r.imageUrl ? `<button onclick="window.viewImage('${r.imageUrl}')" class="text-blue-400 hover:text-white text-xs"><i class="fas fa-image"></i> Ver Foto</button>` : '<span class="text-gray-600">-</span>'}
+                        </td>
+                        <td class="px-6 py-4">
+                            ${r.approved ?
+                            '<span class="px-2 py-1 text-xs rounded bg-green-900 text-green-200 border border-green-700">Aprovado</span>' :
+                            '<span class="px-2 py-1 text-xs rounded bg-yellow-900 text-yellow-200 border border-yellow-700">Pendente</span>'}
+                        </td>
+                        <td class="px-6 py-4 flex gap-2">
+                            ${!r.approved ?
+                            `<button onclick="window.approveReview('${docSnap.id}')" class="text-green-500 hover:text-green-400" title="Aprovar"><i class="fas fa-check"></i></button>`
+                            : ''}
+                            <button onclick="window.deleteReview('${docSnap.id}')" class="text-red-500 hover:text-red-400" title="Excluir"><i class="fas fa-trash"></i></button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            });
+        }
+
+        window.approveReview = async (id) => {
+            try {
+                await updateDoc(doc(db, "reviews", id), { approved: true });
+            } catch (error) {
+                console.error(error);
+                alert("Erro ao aprovar");
+            }
+        };
+
+        window.deleteReview = async (id) => {
+            if (confirm('Excluir esta avaliação permanentemente?')) {
+                try {
+                    await deleteDoc(doc(db, "reviews", id));
+                } catch (error) {
+                    console.error(error);
+                    alert("Erro ao excluir");
+                }
+            }
+        };
+
+        window.viewImage = (url) => {
+            document.getElementById('modal-img-src').src = url;
+            document.getElementById('image-modal').showModal();
+        }
+
+    </script>
+</body>
+
+</html>

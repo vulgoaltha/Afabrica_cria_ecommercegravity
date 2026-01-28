@@ -4,18 +4,18 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart as ShoppingCartIcon, X, Trash2, Plus, Minus } from 'lucide-react';
 import { useCart } from '@/hooks/useCart';
 import { Button } from '@/components/ui/button';
-import { initializeCheckout } from '@/api/EcommerceApi';
 import { useToast } from '@/components/ui/use-toast';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 const ShoppingCart = ({ isCartOpen, setIsCartOpen }) => {
     const { toast } = useToast();
-    const location = useLocation();
     const navigate = useNavigate();
     const { cartItems, removeFromCart, updateQuantity, getCartTotal, clearCart } = useCart();
 
-    const totalItems = useMemo(() => cartItems.reduce((sum, item) => sum + item.quantity, 0), [cartItems]);
+    const handleCheckout = async () => {
+        console.log("Checkout inciado. Itens:", cartItems);
 
-    const handleCheckout = useCallback(() => {
         if (cartItems.length === 0) {
             toast({
                 title: 'Seu carrinho está vazio',
@@ -25,9 +25,77 @@ const ShoppingCart = ({ isCartOpen, setIsCartOpen }) => {
             return;
         }
 
-        setIsCartOpen(false);
-        navigate('/checkout');
-    }, [cartItems, navigate, setIsCartOpen, toast]);
+        try {
+            // Preparar dados com verificação de segurança reforçada
+            const cleanItems = cartItems.map(item => {
+                // Tenta pegar preço de várias fontes
+                let finalPrice = 0;
+                if (typeof item.variant.price === 'number') finalPrice = item.variant.price;
+                else if (typeof item.variant.price_in_cents === 'number') finalPrice = item.variant.price_in_cents / 100;
+                else if (typeof item.variant.sale_price_in_cents === 'number') finalPrice = item.variant.sale_price_in_cents / 100;
+
+                // Garante que não é NaN
+                if (isNaN(finalPrice)) finalPrice = 0;
+
+                return {
+                    productId: String(item.product.id || item.product._id || 'N/A'),
+                    title: String(item.product.title || 'Produto Sem Nome'),
+                    price: finalPrice,
+                    quantity: Number(item.quantity) || 1,
+                    size: String(item.variant.title || 'U'),
+                    image: String(item.product.image || '')
+                };
+            });
+
+            // Parse total com segurança
+            const totalStr = getCartTotal().replace('R$', '').trim();
+            // Remove pontos de milhar e troca virgula decimal por ponto
+            const totalValue = parseFloat(totalStr.replace(/\./g, '').replace(',', '.')) || 0;
+
+            const orderData = {
+                items: cleanItems,
+                total: totalValue,
+                status: 'Recebido',
+                customerName: 'Cliente Site',
+                whatsapp: '',
+                createdAt: serverTimestamp()
+            };
+
+            console.log("Enviando pedido para Firestore:", orderData);
+
+            const docRef = await addDoc(collection(db, "orders"), orderData);
+
+            console.log("SUCESSO! Pedido salvo com ID: ", docRef.id);
+
+            // 2. Limpar carrinho
+            clearCart();
+            setIsCartOpen(false);
+
+            // 3. Feedback
+            toast({
+                title: 'Pedido realizado!',
+                description: `Pedido #${docRef.id.slice(0, 6)} salvo com sucesso!`,
+                className: "bg-green-600 text-white border-none"
+            });
+
+            // alert(`Sucesso! Pedido #${docRef.id} criado.`);
+
+        } catch (error) {
+            console.error("ERRO FATAL NO CHECKOUT:", error);
+
+            let errorMessage = 'Verifique sua conexão e tente novamente.';
+            if (error.code === 'permission-denied') errorMessage = 'Erro de permissão: Falha ao salvar no Firestore.';
+            if (error.message) errorMessage = error.message;
+
+            toast({
+                title: 'Erro ao processar',
+                description: errorMessage,
+                variant: 'destructive',
+            });
+
+            alert("Erro: " + errorMessage);
+        }
+    };
 
     return (
         <AnimatePresence>

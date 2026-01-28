@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Produtos - Admin</title>
+    <script type="importmap">
+    {
+        "imports": {
+            "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
+            "firebase/firestore": "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js",
+            "firebase/auth": "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js",
+            "firebase/storage": "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js"
+        }
+    }
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-900 text-white font-sans antialiased">
+    <div class="flex h-screen overflow-hidden">
+
+        <!-- Sidebar -->
+        <aside class="w-64 bg-gray-800 border-r border-gray-700 hidden md:flex flex-col">
+            <div class="p-6 border-b border-gray-700">
+                <h1 class="text-2xl font-bold text-yellow-500">ADMIN</h1>
+            </div>
+            <nav class="flex-grow p-4 space-y-2">
+                <a href="dashboard.html"
+                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-700 hover:text-white rounded-lg transition">
+                    <i class="fas fa-chart-line"></i> Dashboard
+                </a>
+                <a href="pedidos.html"
+                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-700 hover:text-white rounded-lg transition">
+                    <i class="fas fa-box"></i> Pedidos
+                </a>
+                <a href="produtos.html"
+                    class="flex items-center gap-3 px-4 py-3 bg-gray-700 text-white rounded-lg transition">
+                    <i class="fas fa-tshirt"></i> Produtos
+                </a>
+                <a href="reviews.html"
+                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-700 hover:text-white rounded-lg transition">
+                    <i class="fas fa-star"></i> Avaliações
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-900 p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">Gerenciar Produtos</h2>
+                    <button onclick="openProductModal()"
+                        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded flex items-center gap-2">
+                        <i class="fas fa-plus"></i> Novo Produto
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6" id="products-grid">
+                    <!-- JS popula aqui -->
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal Produto -->
+    <dialog id="product-modal"
+        class="bg-gray-800 text-white rounded-xl shadow-2xl p-0 w-full max-w-lg backdrop:bg-black/80">
+        <form id="product-form" class="flex flex-col h-full">
+            <div class="p-6 border-b border-gray-700 flex justify-between">
+                <h3 class="font-bold text-xl" id="modal-title">Novo Produto</h3>
+                <button type="button" onclick="closeModal()" class="text-gray-400 hover:text-white"><i
+                        class="fas fa-times"></i></button>
+            </div>
+            <div class="p-6 space-y-4 overflow-y-auto max-h-[70vh]">
+                <input type="hidden" id="prod-id">
+
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Nome</label>
+                    <input type="text" id="prod-name" required class="w-full bg-gray-700 rounded px-3 py-2">
+                </div>
+
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Preço (R$)</label>
+                    <input type="number" step="0.01" id="prod-price" required
+                        class="w-full bg-gray-700 rounded px-3 py-2">
+                </div>
+
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Imagem URL</label>
+                    <input type="url" id="prod-image" required class="w-full bg-gray-700 rounded px-3 py-2">
+                </div>
+
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Tamanhos Disponíveis</label>
+                    <div class="grid grid-cols-4 gap-2">
+                        <!-- Opções de tamanho -->
+                        <label class="flex items-center space-x-2"><input type="checkbox" name="size" value="P">
+                            <span>P</span></label>
+                        <label class="flex items-center space-x-2"><input type="checkbox" name="size" value="M">
+                            <span>M</span></label>
+                        <label class="flex items-center space-x-2"><input type="checkbox" name="size" value="G">
+                            <span>G</span></label>
+                        <label class="flex items-center space-x-2"><input type="checkbox" name="size" value="GG">
+                            <span>GG</span></label>
+                        <label class="flex items-center space-x-2"><input type="checkbox" name="size" value="EXG">
+                            <span>EXG</span></label>
+                        <label class="flex items-center space-x-2"><input type="checkbox" name="size" value="ESP">
+                            <span>ESP</span></label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" id="prod-customizable" class="w-4 h-4 text-yellow-500 rounded">
+                        <span class="text-sm">Permitir Personalização (Nome/Número)</span>
+                    </label>
+                </div>
+            </div>
+            <div class="p-6 border-t border-gray-700 flex justify-end gap-2">
+                <button type="button" onclick="closeModal()"
+                    class="px-4 py-2 text-gray-400 hover:text-white">Cancelar</button>
+                <button type="submit"
+                    class="px-4 py-2 bg-yellow-500 text-black font-bold rounded hover:bg-yellow-600">Salvar</button>
+            </div>
+        </form>
+    </dialog>
+
+    <script type="module">
+        import { protegerAdmin } from '../js/auth.js';
+        import { db } from '../js/firebase.js';
+        import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot } from "firebase/firestore";
+
+        protegerAdmin(() => {
+            loadProducts();
+        });
+
+        function loadProducts() {
+            onSnapshot(collection(db, "products"), (snapshot) => {
+                const grid = document.getElementById('products-grid');
+                grid.innerHTML = '';
+
+                snapshot.forEach((docSnap) => {
+                    const p = docSnap.data();
+                    const el = document.createElement('div');
+                    el.className = "bg-gray-800 rounded-xl overflow-hidden shadow-lg border border-gray-700 group";
+                    el.innerHTML = `
+                        <div class="h-48 overflow-hidden relative">
+                            <img src="${p.image}" alt="${p.name}" class="w-full h-full object-cover transition duration-500 group-hover:scale-110">
+                            ${p.customizable ? '<span class="absolute top-2 right-2 bg-yellow-500 text-black text-xs font-bold px-2 py-1 rounded">Personalizável</span>' : ''}
+                        </div>
+                        <div class="p-4">
+                            <h3 class="font-bold text-lg mb-1">${p.name}</h3>
+                            <p class="text-green-400 font-bold mb-2">R$ ${parseFloat(p.price).toFixed(2)}</p>
+                            <div class="flex flex-wrap gap-1 mb-4">
+                                ${p.sizes ? p.sizes.map(s => `<span class="px-1.5 py-0.5 bg-gray-700 text-xs rounded">${s}</span>`).join('') : ''}
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="window.editProduct('${docSnap.id}')" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 rounded text-sm"><i class="fas fa-edit"></i> Editar</button>
+                                <button onclick="window.deleteProduct('${docSnap.id}')" class="px-3 bg-red-900/50 hover:bg-red-900 text-red-200 rounded"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                    `;
+                    grid.appendChild(el);
+                });
+            });
+        }
+
+        // --- Lógica do Modal e Form ---
+
+        const modal = document.getElementById('product-modal');
+        const form = document.getElementById('product-form');
+
+        window.openProductModal = (id = null) => {
+            form.reset();
+            document.getElementById('prod-id').value = '';
+            document.getElementById('modal-title').textContent = 'Novo Produto';
+
+            // Checkboxes reset
+            document.querySelectorAll('input[name="size"]').forEach(cb => cb.checked = false);
+
+            if (id) {
+                // Modo Edição - Buscar dados (Para simplificar, vamos trapacear e usar window.db.collection se tivermos cache, ou buscar do server)
+                // Para demo rapida com onSnapshot, poderiamos passar o objeto direto no onclick, mas stringify pode quebrar. 
+                // Vamos buscar rapidinho
+                window.db.collection('products').doc(id).get().then(doc => {
+                    const data = doc.data();
+                    document.getElementById('prod-id').value = id;
+                    document.getElementById('prod-name').value = data.name;
+                    document.getElementById('prod-price').value = data.price;
+                    document.getElementById('prod-image').value = data.image;
+                    document.getElementById('prod-customizable').checked = data.customizable;
+                    document.getElementById('modal-title').textContent = 'Editar Produto';
+
+                    if (data.sizes) {
+                        data.sizes.forEach(s => {
+                            const cb = document.querySelector(`input[name="size"][value="${s}"]`);
+                            if (cb) cb.checked = true;
+                        });
+                    }
+                    modal.showModal();
+                });
+            } else {
+                modal.showModal();
+            }
+        };
+
+        window.closeModal = () => modal.close();
+        window.editProduct = (id) => window.openProductModal(id);
+
+        window.deleteProduct = async (id) => {
+            if (confirm('Tem certeza que deseja excluir?')) {
+                await deleteDoc(doc(db, "products", id));
+            }
+        };
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const id = document.getElementById('prod-id').value;
+            const name = document.getElementById('prod-name').value;
+            const price = parseFloat(document.getElementById('prod-price').value);
+            const image = document.getElementById('prod-image').value;
+            const customizable = document.getElementById('prod-customizable').checked;
+
+            const sizes = Array.from(document.querySelectorAll('input[name="size"]:checked')).map(cb => cb.value);
+
+            const data = {
+                name,
+                price,
+                image,
+                customizable,
+                sizes,
+                updatedAt: new Date()
+            };
+
+            try {
+                if (id) {
+                    await updateDoc(doc(db, "products", id), data);
+                } else {
+                    data.createdAt = new Date();
+                    await addDoc(collection(db, "products"), data);
+                }
+                closeModal();
+            } catch (error) {
+                console.error(error);
+                alert("Erro ao salvar produto");
+            }
+        });
+
+    </script>
+</body>
+
+</html>
