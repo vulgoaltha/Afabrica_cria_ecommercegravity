@@ -30,21 +30,7 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "firebase/app";
-        import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs } from "firebase/firestore";
-
-        // Configuração direta para garantir que funcione
-        const firebaseConfig = {
-            apiKey: "AIzaSyCd9i7k3EywIK56nQy9alVmf_DbY6OV1WI",
-            authDomain: "afabricacriaecommercegravity.firebaseapp.com",
-            projectId: "afabricacriaecommercegravity",
-            storageBucket: "afabricacriaecommercegravity.firebasestorage.app",
-            messagingSenderId: "1023848528077",
-            appId: "1:1023848528077:web:3ae42b0a49fc5892509184"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        import { supabase } from '../js/supabase.js';
 
         const ORIGINAL_PRODUCTS = [
             { title: "Camiseta", description: "Camiseta de alta qualidade com personalização.", price_in_cents: 8990, image: "/img/products/chave.png", category: "Camisetas", customizable: true, stock: 50, sizes: ['P', 'M', 'G', 'GG', 'XG'] },
@@ -62,37 +48,48 @@
             BTN.disabled = true;
             BTN.innerText = "Restaurando...";
             STATUS.classList.remove('hidden');
-            STATUS.innerText = "Iniciando...";
+            STATUS.innerText = "Iniciando restauração no Supabase...";
 
             try {
                 // 1. Restore Original
                 for (const p of ORIGINAL_PRODUCTS) {
-                    await addDoc(collection(db, "products"), { ...p, createdAt: serverTimestamp() });
+                    const { error } = await supabase
+                        .from('products')
+                        .insert([p]);
+
+                    if (error) throw error;
                     STATUS.innerText += `\n+ ${p.title}`;
                 }
 
                 // 2. Create 80 Random
                 STATUS.innerText += `\nCriando mais 80 produtos...`;
+                const randomProducts = [];
                 for (let i = 1; i <= 80; i++) {
-                    const p = {
+                    randomProducts.push({
                         title: `Produto Exemplo #${i}`,
                         description: "Descrição automática.",
                         price_in_cents: Math.floor(Math.random() * 20000) + 5000,
                         image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800&q=80",
                         category: "Geral",
                         sizes: ['P', 'M', 'G'],
-                        stock: 100,
-                        createdAt: serverTimestamp()
-                    };
-                    await addDoc(collection(db, "products"), p);
+                        stock: 100
+                    });
                 }
+
+                // Batch insert for better performance
+                const { error: batchError } = await supabase
+                    .from('products')
+                    .insert(randomProducts);
+
+                if (batchError) throw batchError;
 
                 STATUS.innerText += "\n\nSUCESSO! TUDO PRONTO.";
                 BTN.innerText = "CONCLUÍDO!";
                 BTN.classList.replace('bg-green-600', 'bg-blue-600');
 
                 setTimeout(() => {
-                    window.location.href = "/catalogo";
+                    const isVite = window.location.port === '3000' || window.location.hostname === 'localhost';
+                    window.location.href = isVite ? "/" : "/";
                 }, 2000);
 
             } catch (e) {

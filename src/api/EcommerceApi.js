@@ -1,7 +1,6 @@
-import { db } from '@/lib/firebase';
-import { collection, getDocs, getDoc, doc } from 'firebase/firestore';
+import { supabase } from '@/lib/supabase';
 
-export const formatCurrency = (value, currencyInfo) => {
+export const formatCurrency = (value) => {
     return new Intl.NumberFormat('pt-BR', {
         style: 'currency',
         currency: 'BRL',
@@ -10,30 +9,33 @@ export const formatCurrency = (value, currencyInfo) => {
 
 export const getProducts = async () => {
     try {
-        const querySnapshot = await getDocs(collection(db, "products"));
-        const products = [];
+        const { data, error } = await supabase
+            .from('products')
+            .select('*')
+            .order('created_at', { ascending: false });
 
-        querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            products.push({
-                id: doc.id,
-                title: data.title,
-                subtitle: data.description ? data.description.substring(0, 50) + '...' : '',
-                image: data.image,
-                price: data.price, // Legacy support
-                // Map Firestore fields to expected frontend format
-                variants: [
-                    {
-                        id: `var-${doc.id}`,
-                        price_formatted: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format((data.price_in_cents || 0) / 100),
-                        price_in_cents: data.price_in_cents || 0,
-                        sale_price_in_cents: data.sale_price_in_cents,
-                        sale_price_formatted: data.sale_price_in_cents ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(data.sale_price_in_cents / 100) : null,
-                        inventory_quantity: data.stock || 0
-                    }
-                ]
-            });
-        });
+        if (error) throw error;
+
+        const products = data.map((item) => ({
+            id: item.id,
+            title: item.title,
+            subtitle: item.subtitle || (item.description ? item.description.substring(0, 50) + '...' : ''),
+            description: item.description,
+            image: item.image,
+            category: item.category,
+            // Map Supabase fields to expected frontend format
+            variants: [
+                {
+                    id: `var-${item.id}`,
+                    price_formatted: formatCurrency(item.price_in_cents || 0),
+                    price_in_cents: item.price_in_cents || 0,
+                    sale_price_in_cents: item.sale_price_in_cents,
+                    sale_price_formatted: item.sale_price_in_cents ? formatCurrency(item.sale_price_in_cents) : null,
+                    inventory_quantity: item.stock || 0,
+                    manage_inventory: true
+                }
+            ]
+        }));
 
         return { products };
     } catch (error) {
@@ -43,36 +45,35 @@ export const getProducts = async () => {
 };
 
 export const getProductQuantities = async ({ product_ids }) => {
-    // In Firestore, we already have stock in the product document. 
-    // This is a legacy function for the template, we can return dummy or refetch.
-    // For efficiency, we will assume detail view handles stock, but list view might need this.
-    // Let's simplified return based on what we passed or fetch if needed.
-    // For now, return mock to avoid breaking list view loops, or implement real fetch if critical.
+    try {
+        const { data, error } = await supabase
+            .from('products')
+            .select('id, stock')
+            .in('id', product_ids);
 
-    // Real implementation:
-    const variants = [];
-    for (const id of product_ids) {
-        // We probably don't want to do N reads here. 
-        // But since we transitioned to "One Doc = One Product", we handled this in getProducts above.
-        // We will just return a success structure.
-        variants.push({
-            id: `var-${id}`,
-            inventory_quantity: 100 // Fallback or real fetch
-        });
+        if (error) throw error;
+
+        const variants = data.map(item => ({
+            id: `var-${item.id}`,
+            inventory_quantity: item.stock || 0
+        }));
+
+        return { variants };
+    } catch (error) {
+        console.error("Error fetching quantities:", error);
+        return { variants: [] };
     }
-    return { variants };
 };
 
 export const getProduct = async (id) => {
     try {
-        const docRef = doc(db, "products", id);
-        const docSnap = await getDoc(docRef);
+        const { data, error } = await supabase
+            .from('products')
+            .select('*')
+            .eq('id', id)
+            .single();
 
-        if (!docSnap.exists()) {
-            throw new Error('Produto não encontrado');
-        }
-
-        const data = docSnap.data();
+        if (error) throw error;
 
         // Handle images
         let images = [];
@@ -83,23 +84,23 @@ export const getProduct = async (id) => {
         }
 
         return {
-            id: docSnap.id,
+            id: data.id,
             title: data.title,
             subtitle: data.subtitle || data.description,
             description: data.description,
             image: data.image,
             images: images,
-            sizes: data.sizes || ['P', 'M', 'G', 'GG'], // Default sizes if none saved
+            sizes: data.sizes || ['P', 'M', 'G', 'GG'],
             customizable: data.customizable || false,
-            // Construct a primary variant for price display
+            purchasable: true, // Assuming all fetched products are purchasable
             variants: [
                 {
-                    id: `var-${docSnap.id}`,
+                    id: `var-${data.id}`,
                     title: 'Padrão',
-                    price_formatted: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format((data.price_in_cents || 0) / 100),
+                    price_formatted: formatCurrency(data.price_in_cents || 0),
                     price_in_cents: data.price_in_cents || 0,
                     sale_price_in_cents: data.sale_price_in_cents,
-                    sale_price_formatted: data.sale_price_in_cents ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(data.sale_price_in_cents / 100) : null,
+                    sale_price_formatted: data.sale_price_in_cents ? formatCurrency(data.sale_price_in_cents) : null,
                     inventory_quantity: data.stock || 0,
                     manage_inventory: true
                 }
@@ -112,7 +113,6 @@ export const getProduct = async (id) => {
 };
 
 export const initializeCheckout = async ({ items, successUrl, cancelUrl }) => {
-    // This connects to our Checkout.jsx logic usually, or backend.
-    // For now, keep as mock since Checkout.jsx handles the real logic manually.
+    // Legacy support for checkout initialization
     return { url: successUrl };
 };

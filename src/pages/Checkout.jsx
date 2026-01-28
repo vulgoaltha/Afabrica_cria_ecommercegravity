@@ -7,8 +7,7 @@ import { useCart } from '@/hooks/useCart';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
-import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { supabase } from '@/lib/supabase';
 
 const Checkout = () => {
     const navigate = useNavigate();
@@ -108,40 +107,43 @@ const Checkout = () => {
                 if (isNaN(finalPrice)) finalPrice = 0;
 
                 return {
-                    productId: String(item.product.id || item.product._id || 'N/A'),
+                    productId: String(item.product.id || 'N/A'),
                     title: String(item.product.title || 'Produto Sem Nome'),
                     price: finalPrice,
                     quantity: Number(item.quantity) || 1,
-                    size: String(item.variant.title || 'U'),
+                    size: String(item.variant.size || 'U'),
                     image: String(item.product.image || '')
                 };
             });
 
             const orderData = {
-                customer: {
-                    name: formData.fullName,
-                    cpf: formData.cpf,
-                    phone: formData.phone,
-                    email: formData.email,
-                    address: {
-                        street: formData.street,
-                        number: formData.number,
-                        complement: formData.complement,
-                        city: formData.city,
-                        state: formData.state,
-                        cep: formData.cep
-                    }
+                customer_name: formData.fullName,
+                customer_email: formData.email,
+                customer_phone: formData.phone,
+                address: {
+                    street: formData.street,
+                    number: formData.number,
+                    complement: formData.complement,
+                    city: formData.city,
+                    state: formData.state,
+                    cep: formData.cep,
+                    cpf: formData.cpf
                 },
                 items: cleanItems,
-                paymentMethod: formData.paymentMethod,
-                subtotal: subtotal,
-                shipping: shipping,
-                total: grandTotal,
-                status: 'Aguardando pagamento',
-                createdAt: serverTimestamp()
+                payment_method: formData.paymentMethod,
+                total_in_cents: Math.round(grandTotal * 100),
+                status: 'Aguardando Pagamento'
             };
 
-            const docRef = await addDoc(collection(db, "orders"), orderData);
+            const { data, error } = await supabase
+                .from('orders')
+                .insert([orderData])
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            const orderId = data.id;
 
             // Integração Mercado Pago
             if (formData.paymentMethod === 'pix' || formData.paymentMethod === 'card' || formData.paymentMethod === 'boleto') {
@@ -166,7 +168,7 @@ const Checkout = () => {
                                     cep: formData.cep.replace(/\D/g, '')
                                 }
                             },
-                            orderId: docRef.id
+                            orderId: orderId
                         }),
                     });
 
@@ -181,7 +183,7 @@ const Checkout = () => {
                             // Simula sucesso e vai para success page
                             setTimeout(() => {
                                 clearCart();
-                                navigate('/success', { state: { orderId: docRef.id, email: formData.email } });
+                                navigate('/success', { state: { orderId: orderId, email: formData.email } });
                             }, 2000);
                             return;
                         }
@@ -207,14 +209,14 @@ const Checkout = () => {
                         variant: 'destructive',
                     });
                     // Fallback para sucesso para não perder o pedido
-                    navigate('/success', { state: { orderId: docRef.id, email: formData.email, paymentError: true } });
+                    navigate('/success', { state: { orderId: orderId, email: formData.email, paymentError: true } });
                 }
             } else {
                 // Outros métodos
                 clearCart();
                 navigate('/success', {
                     state: {
-                        orderId: docRef.id,
+                        orderId: orderId,
                         email: formData.email
                     }
                 });
@@ -394,8 +396,8 @@ const Checkout = () => {
                                         type="button"
                                         onClick={() => setFormData(p => ({ ...p, paymentMethod: 'pix' }))}
                                         className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${formData.paymentMethod === 'pix'
-                                                ? 'bg-[var(--color-gold)] text-black border-[var(--color-gold)] font-bold'
-                                                : 'bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-700'
+                                            ? 'bg-[var(--color-gold)] text-black border-[var(--color-gold)] font-bold'
+                                            : 'bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-700'
                                             }`}
                                     >
                                         <QrCode size={24} />
@@ -405,8 +407,8 @@ const Checkout = () => {
                                         type="button"
                                         onClick={() => setFormData(p => ({ ...p, paymentMethod: 'card' }))}
                                         className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${formData.paymentMethod === 'card'
-                                                ? 'bg-[var(--color-gold)] text-black border-[var(--color-gold)] font-bold'
-                                                : 'bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-700'
+                                            ? 'bg-[var(--color-gold)] text-black border-[var(--color-gold)] font-bold'
+                                            : 'bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-700'
                                             }`}
                                     >
                                         <IconCard size={24} />
@@ -416,8 +418,8 @@ const Checkout = () => {
                                         type="button"
                                         onClick={() => setFormData(p => ({ ...p, paymentMethod: 'boleto' }))}
                                         className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${formData.paymentMethod === 'boleto'
-                                                ? 'bg-[var(--color-gold)] text-black border-[var(--color-gold)] font-bold'
-                                                : 'bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-700'
+                                            ? 'bg-[var(--color-gold)] text-black border-[var(--color-gold)] font-bold'
+                                            : 'bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-700'
                                             }`}
                                     >
                                         <FileText size={24} />

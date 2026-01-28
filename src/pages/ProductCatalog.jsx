@@ -91,24 +91,26 @@ const ProductCatalog = () => {
                     </motion.div>
 
                     {/* Search */}
-                    <div className="mb-8 space-y-4">
-                        <div className="flex flex-col md:flex-row gap-4">
-                            <div className="relative flex-1">
-                                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
-                                <Input
-                                    type="text"
-                                    placeholder="Buscar produtos..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="pl-12"
-                                />
+                    {!loading && (
+                        <div className="mb-8 space-y-4">
+                            <div className="flex flex-col md:flex-row gap-4">
+                                <div className="relative flex-1">
+                                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
+                                    <Input
+                                        type="text"
+                                        placeholder="Buscar produtos..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="pl-12"
+                                    />
+                                </div>
                             </div>
-                        </div>
 
-                        <p className="text-gray-400">
-                            {filteredProducts.length} {filteredProducts.length === 1 ? 'produto encontrado' : 'produtos encontrados'}
-                        </p>
-                    </div>
+                            <p className="text-gray-400">
+                                {filteredProducts.length} {filteredProducts.length === 1 ? 'produto encontrado' : 'produtos encontrados'}
+                            </p>
+                        </div>
+                    )}
 
                     {/* Products Grid */}
                     {loading ? (
