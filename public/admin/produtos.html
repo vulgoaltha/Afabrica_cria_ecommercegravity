@@ -4,253 +4,209 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Produtos - Admin</title>
-    <script type="importmap">
-    {
-        "imports": {
-            "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
-            "firebase/firestore": "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js",
-            "firebase/auth": "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js",
-            "firebase/storage": "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js"
-        }
-    }
-    </script>
+    <title>Gerenciar Produtos - Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Scripts loaded via modules -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
 </head>
 
-<body class="bg-gray-900 text-white font-sans antialiased">
+<body class="bg-gray-100">
     <div class="flex h-screen overflow-hidden">
 
         <!-- Sidebar -->
-        <aside class="w-64 bg-gray-800 border-r border-gray-700 hidden md:flex flex-col">
-            <div class="p-6 border-b border-gray-700">
-                <h1 class="text-2xl font-bold text-yellow-500">ADMIN</h1>
+        <aside class="w-64 bg-gray-900 text-white hidden md:flex flex-col">
+            <div class="p-6">
+                <h1 class="text-2xl font-bold tracking-tighter">ADMIN<span class="text-yellow-500">.GRAVITY</span></h1>
             </div>
-            <nav class="flex-grow p-4 space-y-2">
+            <nav className="flex-1 px-4 space-y-2">
                 <a href="dashboard.html"
-                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-700 hover:text-white rounded-lg transition">
-                    <i class="fas fa-chart-line"></i> Dashboard
+                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-colors">
+                    <span>📊</span> Dashboard
                 </a>
                 <a href="pedidos.html"
-                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-700 hover:text-white rounded-lg transition">
-                    <i class="fas fa-box"></i> Pedidos
+                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-colors">
+                    <span>📦</span> Pedidos
                 </a>
                 <a href="produtos.html"
-                    class="flex items-center gap-3 px-4 py-3 bg-gray-700 text-white rounded-lg transition">
-                    <i class="fas fa-tshirt"></i> Produtos
+                    class="flex items-center gap-3 px-4 py-3 bg-yellow-500 text-black font-bold rounded-lg shadow-lg shadow-yellow-500/20">
+                    <span>👕</span> Produtos
                 </a>
                 <a href="reviews.html"
-                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-700 hover:text-white rounded-lg transition">
-                    <i class="fas fa-star"></i> Avaliações
+                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-colors">
+                    <span>⭐</span> Avaliações
                 </a>
             </nav>
+            <div class="p-4 border-t border-gray-800">
+                <button id="btnLogout"
+                    class="w-full flex items-center gap-2 px-4 py-2 text-red-400 hover:text-red-300 transition-colors">
+                    <span>🚪</span> Sair
+                </button>
+            </div>
         </aside>
 
         <!-- Main Content -->
-        <div class="flex-1 flex flex-col overflow-hidden">
-            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-900 p-6">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold">Gerenciar Produtos</h2>
-                    <button onclick="openProductModal()"
-                        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded flex items-center gap-2">
-                        <i class="fas fa-plus"></i> Novo Produto
-                    </button>
+        <main class="flex-1 flex flex-col overflow-hidden">
+            <!-- Header -->
+            <header class="bg-white shadow-sm h-16 flex items-center justify-between px-6 z-10">
+                <button class="md:hidden text-gray-600">☰</button>
+                <h2 class="text-xl font-semibold text-gray-800">Gerenciar Produtos</h2>
+                <button id="btnNewProduct"
+                    class="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors flex items-center gap-2 text-sm font-medium">
+                    + Novo Produto
+                </button>
+            </header>
+
+            <!-- Content -->
+            <div class="flex-1 overflow-auto p-6">
+
+                <!-- Loading State -->
+                <div id="loading" class="hidden flex justify-center py-10">
+                    <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-900"></div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6" id="products-grid">
-                    <!-- JS popula aqui -->
+                <!-- Products Grid -->
+                <div id="productsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <!-- Products will be injected here via JS -->
                 </div>
-            </main>
-        </div>
+
+            </div>
+        </main>
     </div>
 
-    <!-- Modal Produto -->
-    <dialog id="product-modal"
-        class="bg-gray-800 text-white rounded-xl shadow-2xl p-0 w-full max-w-lg backdrop:bg-black/80">
-        <form id="product-form" class="flex flex-col h-full">
-            <div class="p-6 border-b border-gray-700 flex justify-between">
-                <h3 class="font-bold text-xl" id="modal-title">Novo Produto</h3>
-                <button type="button" onclick="closeModal()" class="text-gray-400 hover:text-white"><i
-                        class="fas fa-times"></i></button>
+    <!-- Product Modal -->
+    <div id="productModal"
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50 sticky top-0 z-10">
+                <h3 class="text-lg font-bold text-gray-800" id="modalTitle">Novo Produto</h3>
+                <button onclick="document.getElementById('productModal').classList.add('hidden')"
+                    class="text-gray-400 hover:text-gray-600">✕</button>
             </div>
-            <div class="p-6 space-y-4 overflow-y-auto max-h-[70vh]">
-                <input type="hidden" id="prod-id">
 
-                <div>
-                    <label class="block text-sm text-gray-400 mb-1">Nome</label>
-                    <input type="text" id="prod-name" required class="w-full bg-gray-700 rounded px-3 py-2">
-                </div>
+            <form id="productForm" class="p-6 space-y-6">
+                <input type="hidden" id="productId">
 
-                <div>
-                    <label class="block text-sm text-gray-400 mb-1">Preço (R$)</label>
-                    <input type="number" step="0.01" id="prod-price" required
-                        class="w-full bg-gray-700 rounded px-3 py-2">
-                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Basic Info -->
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Nome do Produto *</label>
+                            <input type="text" id="name" required
+                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-black focus:border-black outline-none transition-all">
+                        </div>
 
-                <div>
-                    <label class="block text-sm text-gray-400 mb-1">Imagem URL</label>
-                    <input type="url" id="prod-image" required class="w-full bg-gray-700 rounded px-3 py-2">
-                </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Preço (R$) *</label>
+                                <input type="number" id="price" step="0.01" required
+                                    class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-black">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Preço Promocional</label>
+                                <input type="number" id="salePrice" step="0.01"
+                                    class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-black">
+                            </div>
+                        </div>
 
-                <div>
-                    <label class="block text-sm text-gray-400 mb-1">Tamanhos Disponíveis</label>
-                    <div class="grid grid-cols-4 gap-2">
-                        <!-- Opções de tamanho -->
-                        <label class="flex items-center space-x-2"><input type="checkbox" name="size" value="P">
-                            <span>P</span></label>
-                        <label class="flex items-center space-x-2"><input type="checkbox" name="size" value="M">
-                            <span>M</span></label>
-                        <label class="flex items-center space-x-2"><input type="checkbox" name="size" value="G">
-                            <span>G</span></label>
-                        <label class="flex items-center space-x-2"><input type="checkbox" name="size" value="GG">
-                            <span>GG</span></label>
-                        <label class="flex items-center space-x-2"><input type="checkbox" name="size" value="EXG">
-                            <span>EXG</span></label>
-                        <label class="flex items-center space-x-2"><input type="checkbox" name="size" value="ESP">
-                            <span>ESP</span></label>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Categoria *</label>
+                            <select id="category"
+                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-black bg-white">
+                                <option value="camisetas">Camisetas</option>
+                                <option value="moletons">Moletons</option>
+                                <option value="acessorios">Acessórios</option>
+                                <option value="calcados">Calçados</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Estoque</label>
+                            <input type="number" id="stock" value="100"
+                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-black">
+                        </div>
+                    </div>
+
+                    <!-- Images -->
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Imagem Principal *</label>
+                            <div
+                                class="relative w-full aspect-video bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden hover:bg-gray-50 transition-colors group">
+                                <img id="previewImage" src=""
+                                    class="absolute inset-0 w-full h-full object-cover hidden">
+                                <div class="text-center p-4">
+                                    <p class="text-sm text-gray-500">Clique para upload</p>
+                                </div>
+                                <input type="file" id="imageInput" accept="image/*"
+                                    class="absolute inset-0 opacity-0 cursor-pointer">
+                            </div>
+                        </div>
+
+                        <!-- Gallery (Future enhancement placeholder) -->
+                        <div class="opacity-50 pointer-events-none">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Galeria (Em breve)</label>
+                            <div class="flex gap-2">
+                                <div
+                                    class="w-16 h-16 bg-gray-100 rounded border flex items-center justify-center text-xs">
+                                    +</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
+                <!-- Description -->
                 <div>
-                    <label class="flex items-center space-x-2 cursor-pointer">
-                        <input type="checkbox" id="prod-customizable" class="w-4 h-4 text-yellow-500 rounded">
-                        <span class="text-sm">Permitir Personalização (Nome/Número)</span>
-                    </label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+                    <textarea id="description" rows="3"
+                        class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-black"></textarea>
                 </div>
-            </div>
-            <div class="p-6 border-t border-gray-700 flex justify-end gap-2">
-                <button type="button" onclick="closeModal()"
-                    class="px-4 py-2 text-gray-400 hover:text-white">Cancelar</button>
-                <button type="submit"
-                    class="px-4 py-2 bg-yellow-500 text-black font-bold rounded hover:bg-yellow-600">Salvar</button>
-            </div>
-        </form>
-    </dialog>
 
-    <script type="module">
-        import { protegerAdmin } from '../js/auth.js';
-        import { db } from '../js/firebase.js';
-        import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot } from "firebase/firestore";
+                <!-- Sizes -->
+                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <label class="block text-sm font-bold text-gray-800 mb-3">Tamanhos Disponíveis</label>
+                    <div class="flex flex-wrap gap-3" id="sizesContainer">
+                        <!-- Checkboxes generated by JS -->
+                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" value="P"
+                                class="size-check rounded text-black focus:ring-black"> P</label>
+                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" value="M"
+                                class="size-check rounded text-black focus:ring-black" checked> M</label>
+                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" value="G"
+                                class="size-check rounded text-black focus:ring-black" checked> G</label>
+                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" value="GG"
+                                class="size-check rounded text-black focus:ring-black" checked> GG</label>
+                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" value="XG"
+                                class="size-check rounded text-black focus:ring-black"> XG</label>
+                    </div>
 
-        protegerAdmin(() => {
-            loadProducts();
-        });
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <label class="flex items-center gap-2 font-medium text-gray-700">
+                            <input type="checkbox" id="isCustomizable" class="rounded text-black focus:ring-black">
+                            Produto Personalizável?
+                        </label>
+                        <p class="text-xs text-gray-500 mt-1 pl-6">Se marcado, o cliente poderá enviar uma imagem de
+                            referência.</p>
+                    </div>
+                </div>
 
-        function loadProducts() {
-            onSnapshot(collection(db, "products"), (snapshot) => {
-                const grid = document.getElementById('products-grid');
-                grid.innerHTML = '';
+                <!-- Actions -->
+                <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+                    <button type="button" onclick="document.getElementById('productModal').classList.add('hidden')"
+                        class="px-6 py-2 rounded-lg text-gray-600 hover:bg-gray-100 font-medium transition-colors">Cancelar</button>
+                    <button type="submit"
+                        class="px-6 py-2 rounded-lg bg-black text-white hover:bg-gray-800 font-medium shadow-lg transition-all flex items-center gap-2">
+                        <span id="btnSaveText">Salvar Produto</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-                snapshot.forEach((docSnap) => {
-                    const p = docSnap.data();
-                    const el = document.createElement('div');
-                    el.className = "bg-gray-800 rounded-xl overflow-hidden shadow-lg border border-gray-700 group";
-                    el.innerHTML = `
-                        <div class="h-48 overflow-hidden relative">
-                            <img src="${p.image}" alt="${p.name}" class="w-full h-full object-cover transition duration-500 group-hover:scale-110">
-                            ${p.customizable ? '<span class="absolute top-2 right-2 bg-yellow-500 text-black text-xs font-bold px-2 py-1 rounded">Personalizável</span>' : ''}
-                        </div>
-                        <div class="p-4">
-                            <h3 class="font-bold text-lg mb-1">${p.name}</h3>
-                            <p class="text-green-400 font-bold mb-2">R$ ${parseFloat(p.price).toFixed(2)}</p>
-                            <div class="flex flex-wrap gap-1 mb-4">
-                                ${p.sizes ? p.sizes.map(s => `<span class="px-1.5 py-0.5 bg-gray-700 text-xs rounded">${s}</span>`).join('') : ''}
-                            </div>
-                            <div class="flex gap-2">
-                                <button onclick="window.editProduct('${docSnap.id}')" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 rounded text-sm"><i class="fas fa-edit"></i> Editar</button>
-                                <button onclick="window.deleteProduct('${docSnap.id}')" class="px-3 bg-red-900/50 hover:bg-red-900 text-red-200 rounded"><i class="fas fa-trash"></i></button>
-                            </div>
-                        </div>
-                    `;
-                    grid.appendChild(el);
-                });
-            });
-        }
-
-        // --- Lógica do Modal e Form ---
-
-        const modal = document.getElementById('product-modal');
-        const form = document.getElementById('product-form');
-
-        window.openProductModal = (id = null) => {
-            form.reset();
-            document.getElementById('prod-id').value = '';
-            document.getElementById('modal-title').textContent = 'Novo Produto';
-
-            // Checkboxes reset
-            document.querySelectorAll('input[name="size"]').forEach(cb => cb.checked = false);
-
-            if (id) {
-                // Modo Edição - Buscar dados (Para simplificar, vamos trapacear e usar window.db.collection se tivermos cache, ou buscar do server)
-                // Para demo rapida com onSnapshot, poderiamos passar o objeto direto no onclick, mas stringify pode quebrar. 
-                // Vamos buscar rapidinho
-                window.db.collection('products').doc(id).get().then(doc => {
-                    const data = doc.data();
-                    document.getElementById('prod-id').value = id;
-                    document.getElementById('prod-name').value = data.name;
-                    document.getElementById('prod-price').value = data.price;
-                    document.getElementById('prod-image').value = data.image;
-                    document.getElementById('prod-customizable').checked = data.customizable;
-                    document.getElementById('modal-title').textContent = 'Editar Produto';
-
-                    if (data.sizes) {
-                        data.sizes.forEach(s => {
-                            const cb = document.querySelector(`input[name="size"][value="${s}"]`);
-                            if (cb) cb.checked = true;
-                        });
-                    }
-                    modal.showModal();
-                });
-            } else {
-                modal.showModal();
-            }
-        };
-
-        window.closeModal = () => modal.close();
-        window.editProduct = (id) => window.openProductModal(id);
-
-        window.deleteProduct = async (id) => {
-            if (confirm('Tem certeza que deseja excluir?')) {
-                await deleteDoc(doc(db, "products", id));
-            }
-        };
-
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const id = document.getElementById('prod-id').value;
-            const name = document.getElementById('prod-name').value;
-            const price = parseFloat(document.getElementById('prod-price').value);
-            const image = document.getElementById('prod-image').value;
-            const customizable = document.getElementById('prod-customizable').checked;
-
-            const sizes = Array.from(document.querySelectorAll('input[name="size"]:checked')).map(cb => cb.value);
-
-            const data = {
-                name,
-                price,
-                image,
-                customizable,
-                sizes,
-                updatedAt: new Date()
-            };
-
-            try {
-                if (id) {
-                    await updateDoc(doc(db, "products", id), data);
-                } else {
-                    data.createdAt = new Date();
-                    await addDoc(collection(db, "products"), data);
-                }
-                closeModal();
-            } catch (error) {
-                console.error(error);
-                alert("Erro ao salvar produto");
-            }
-        });
-
-    </script>
+    <script type="module" src="../js/admin-products.js"></script>
 </body>
 
 </html>

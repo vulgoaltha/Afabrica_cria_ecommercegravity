@@ -5,16 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Admin</title>
-    <script type="importmap">
-    {
-        "imports": {
-            "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
-            "firebase/firestore": "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js",
-            "firebase/auth": "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js",
-            "firebase/storage": "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js"
-        }
-    }
-    </script>
+    <!-- Import Map Removed used global Supabase -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
@@ -148,8 +139,7 @@
 
     <script type="module">
         import { logout, protegerAdmin } from '../js/auth.js';
-        import { db } from '../js/firebase.js';
-        import { collection, query, orderBy, limit, getDocs, where } from "firebase/firestore";
+        import { supabase } from '../js/supabase.js';
 
         // Auth Check
         protegerAdmin(async (user) => {
@@ -165,35 +155,34 @@
 
         async function loadDashboardData() {
             try {
-                // Carregar pedidos recentes
-                const ordersRef = collection(db, "orders");
-                const q = query(ordersRef, orderBy("createdAt", "desc"), limit(5));
-                const querySnapshot = await getDocs(q);
+                // Carregar pedidos recentes (Top 5)
+                const { data: recentOrders, error } = await supabase
+                    .from('orders')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(5);
 
                 const tbody = document.getElementById('recent-orders-body');
                 tbody.innerHTML = '';
 
-                let total = 0;
                 let count = 0;
 
-                if (querySnapshot.empty) {
+                if (!recentOrders || recentOrders.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-gray-500">Nenhum pedido encontrado.</td></tr>';
                 } else {
-                    querySnapshot.forEach((doc) => {
-                        const order = doc.data();
+                    recentOrders.forEach((order) => {
                         count++;
-                        // Simplificando total visual
-                        // Em um app real, faríamos query de agregação ou cloud function
 
-                        const date = order.createdAt?.toDate ? order.createdAt.toDate().toLocaleDateString('pt-BR') : 'N/A';
+                        const date = order.created_at ? new Date(order.created_at).toLocaleDateString('pt-BR') : 'N/A';
+                        const total = (order.total_in_cents || 0) / 100;
 
                         const tr = document.createElement('tr');
                         tr.className = "hover:bg-gray-700/50 transition";
                         tr.innerHTML = `
-                            <td class="px-6 py-4 font-mono text-sm text-gray-400">#${doc.id.slice(0, 6)}</td>
-                            <td class="px-6 py-4 font-medium">${order.customerName || 'Cliente'}</td>
+                            <td class="px-6 py-4 font-mono text-sm text-gray-400">#${order.id.slice(0, 6)}</td>
+                            <td class="px-6 py-4 font-medium">${order.customer_name || 'Cliente'}</td>
                             <td class="px-6 py-4 text-sm text-gray-400">${date}</td>
-                            <td class="px-6 py-4 font-medium text-green-400">R$ ${order.total?.toFixed(2) || '0.00'}</td>
+                            <td class="px-6 py-4 font-medium text-green-400">R$ ${total.toFixed(2)}</td>
                             <td class="px-6 py-4">
                                 <span class="px-2 py-1 text-xs rounded bg-gray-700 text-white border border-gray-600">
                                     ${order.status || 'Pendente'}
@@ -205,9 +194,9 @@
                 }
 
                 // Atualizar stats (simulado/query real simples)
-                document.getElementById('total-orders').textContent = count; // Apenas dos recentes por enquanto
-
                 // Para contadores reais precisa de count() query support ou ler todos (cuidado com leitura)
+                // Aqui usamos o count dos recentes apenas como placeholder ou faríamos uma query count separada
+                document.getElementById('total-orders').textContent = count;
 
             } catch (error) {
                 console.error("Erro ao carregar dashboard:", error);
