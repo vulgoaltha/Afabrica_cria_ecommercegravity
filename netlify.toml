@@ -1,0 +1,17 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  condition = {role = ["admin"]}
+
+[[redirects]]
+  from = "/*"
+  to = "/.next/server/pages/:splat.html"
+  status = 200
