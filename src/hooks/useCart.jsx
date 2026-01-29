@@ -66,12 +66,21 @@ export const CartProvider = ({ children }) => {
     }, []);
 
     const getCartTotal = useCallback(() => {
-        if (cartItems.length === 0) return formatCurrency(0, { currency: 'BRL' }); // Fallback if empty
+        if (cartItems.length === 0) return formatCurrency(0);
 
-        return formatCurrency(cartItems.reduce((total, item) => {
+        const totalInCents = cartItems.reduce((total, item) => {
             const price = item.variant.sale_price_in_cents ?? item.variant.price_in_cents;
             return total + price * item.quantity;
-        }, 0), cartItems[0].variant.currency_info);
+        }, 0);
+
+        return formatCurrency(totalInCents);
+    }, [cartItems]);
+
+    const getRawTotal = useCallback(() => {
+        return cartItems.reduce((total, item) => {
+            const price = item.variant.sale_price_in_cents ?? item.variant.price_in_cents;
+            return total + price * item.quantity;
+        }, 0);
     }, [cartItems]);
 
     const value = useMemo(() => ({
@@ -81,7 +90,8 @@ export const CartProvider = ({ children }) => {
         updateQuantity,
         clearCart,
         getCartTotal,
-    }), [cartItems, addToCart, removeFromCart, updateQuantity, clearCart, getCartTotal]);
+        getRawTotal,
+    }), [cartItems, addToCart, removeFromCart, updateQuantity, clearCart, getCartTotal, getRawTotal]);
 
     return (
         <CartContext.Provider value={value}>

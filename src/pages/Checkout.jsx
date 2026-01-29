@@ -11,7 +11,7 @@ import { supabase } from '@/lib/supabase';
 
 const Checkout = () => {
     const navigate = useNavigate();
-    const { cartItems, getCartTotal, clearCart } = useCart();
+    const { cartItems, getCartTotal, getRawTotal, clearCart } = useCart();
     const { toast } = useToast();
     const [isProcessing, setIsProcessing] = useState(false);
 
@@ -31,9 +31,7 @@ const Checkout = () => {
 
     const [errors, setErrors] = useState({});
 
-    // Parsing total safely
-    const totalStr = getCartTotal().replace('R$', '').trim();
-    const subtotal = parseFloat(totalStr.replace(/\./g, '').replace(',', '.')) || 0;
+    const subtotal = getRawTotal() / 100;
     const shipping = 0; // Frete grátis por enquanto
     const grandTotal = subtotal + shipping;
 

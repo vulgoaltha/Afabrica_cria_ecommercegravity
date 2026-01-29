@@ -5,6 +5,7 @@ import { Facebook, Instagram, Linkedin, Mail, Phone, MapPin, Send } from 'lucide
 import { useToast } from '@/components/ui/use-toast';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import logo from '@/assets/logo.webp';
 
 const Footer = () => {
     const [email, setEmail] = useState('');
@@ -46,9 +47,15 @@ const Footer = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
                     {/* Company Info */}
                     <div className="space-y-4">
-                        <span className="text-2xl font-bold uppercase tracking-tighter">
-                            A FABRICA <span className="text-[var(--color-gold)]">CRIA</span>
-                        </span>
+                        <Link to="/" className="inline-block">
+                            <motion.img
+                                src={logo}
+                                alt="A Fábrica Cria Logo"
+                                className="h-10 w-auto object-contain"
+                                whileHover={{ scale: 1.05 }}
+                                transition={{ duration: 0.2 }}
+                            />
+                        </Link>
                         <p className="text-gray-400 text-sm leading-relaxed">
                             Especialistas em uniformes personalizados para equipes, empresas e eventos.
                             Qualidade excepcional, personalização completa e atendimento dedicado.

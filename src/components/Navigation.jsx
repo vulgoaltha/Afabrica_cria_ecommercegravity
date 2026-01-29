@@ -5,6 +5,7 @@ import { ShoppingCart, Menu, X, Search } from 'lucide-react';
 import { useCart } from '@/hooks/useCart';
 import { cn } from '@/lib/utils';
 import ShoppingCartComponent from '@/components/ShoppingCart';
+import logo from '@/assets/logo.webp';
 
 const Navigation = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -50,7 +51,7 @@ const Navigation = () => {
                         {/* Logo */}
                         <Link to="/" className="flex items-center space-x-2 group z-50 relative">
                             <motion.img
-                                src="https://horizons-cdn.hostinger.com/6bd2a27a-7fac-470b-a512-290292b0957a/528c65dbb9ee93a9e87033dfdaeade83.png"
+                                src={logo}
                                 alt="A Fábrica Cria Logo"
                                 className="h-10 md:h-12 w-auto object-contain"
                                 whileHover={{ scale: 1.05 }}
