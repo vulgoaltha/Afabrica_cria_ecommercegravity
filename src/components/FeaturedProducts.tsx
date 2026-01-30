@@ -8,10 +8,12 @@ import { useCart } from '@/hooks/useCart';
 import { useToast } from '@/components/ui/use-toast';
 import { getProducts, calculateProductPrices } from '@/api/EcommerceApi';
 
+import { Product } from '@/types';
+
 const FeaturedProducts = () => {
     const { addToCart } = useCart();
     const { toast } = useToast();
-    const [products, setProducts] = useState([]);
+    const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -29,18 +31,19 @@ const FeaturedProducts = () => {
         fetchProducts();
     }, []);
 
-    const handleAddToCart = async (product) => {
+    const handleAddToCart = async (product: Product) => {
         if (!product.variants || product.variants.length === 0) return;
 
         const variant = product.variants[0];
+        const availableQuantity = variant.stock_quantity ?? 0;
 
         try {
-            await addToCart(product, variant, 1);
+            await addToCart(product, variant, 1, availableQuantity);
             toast({
                 title: 'Produto adicionado!',
                 description: `${product.title} foi adicionado ao carrinho.`,
             });
-        } catch (error) {
+        } catch (error: any) {
             toast({
                 title: 'Erro ao adicionar',
                 description: error.message,

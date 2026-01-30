@@ -22,13 +22,7 @@ const ProductCatalog = () => {
     const { addToCart } = useCart();
 
     useEffect(() => {
-        if (category === 'aba-reta') {
-            setSelectedSubCategory('bones');
-        } else if (category === 'trucker') {
-            setSelectedSubCategory('bucket');
-        } else if (category === 'vestuario') {
-            setSelectedSubCategory('vestuario');
-        } else if (category === 'cria-do-morro' || !category) {
+        if (category !== 'cria-do-morro') {
             setSelectedSubCategory('todos');
         }
     }, [category]);
@@ -56,18 +50,29 @@ const ProductCatalog = () => {
     const filteredProducts = useMemo(() => {
         let filtered = products;
 
-        // Filter by category from URL
-        if (category) {
-            const isCriaSession = ['cria-do-morro', 'aba-reta', 'trucker', 'vestuario'].includes(category);
+        // Map URL category to database category/sub_category
+        const categoryMap: Record<string, { cat: string, sub?: string }> = {
+            'cria-do-morro': { cat: 'cria-do-morro' },
+            'aba-reta': { cat: 'cria-do-morro', sub: 'bones' },
+            'trucker': { cat: 'cria-do-morro', sub: 'bucket' },
+            'personalizados': { cat: 'personalizados' }
+        };
 
-            if (isCriaSession) {
-                filtered = filtered.filter(p => p.category === 'cria-do-morro');
-                if (selectedSubCategory !== 'todos') {
-                    filtered = filtered.filter(p => p.sub_category === selectedSubCategory);
-                }
-            } else {
-                filtered = filtered.filter(p => p.category === category);
+        // Filter by category from URL
+        if (category && categoryMap[category]) {
+            const mapped = categoryMap[category];
+            filtered = filtered.filter(p => p.category === mapped.cat);
+
+            // If it's a dedicated session (aba-reta or trucker), filter by sub-category
+            if (mapped.sub) {
+                filtered = filtered.filter(p => p.sub_category === mapped.sub);
             }
+            // If it's the main cria-do-morro, apply the local filter button state
+            else if (category === 'cria-do-morro' && selectedSubCategory !== 'todos') {
+                filtered = filtered.filter(p => p.sub_category === selectedSubCategory);
+            }
+        } else if (category) {
+            filtered = filtered.filter(p => p.category === category);
         }
 
         // Filter by search term
@@ -79,7 +84,7 @@ const ProductCatalog = () => {
         }
 
         return filtered;
-    }, [searchTerm, products, category]);
+    }, [searchTerm, products, category, selectedSubCategory]);
 
     const categoryTitle = useMemo(() => {
         if (!category) return 'Catálogo';
@@ -159,27 +164,34 @@ const ProductCatalog = () => {
                             </div>
 
                             {/* Sub-category Filter (Visible in all Cria do Morro related aliases) */}
-                            {['cria-do-morro', 'aba-reta', 'trucker', 'vestuario'].includes(category || '') && (
+                            {(category === 'cria-do-morro' || category === 'aba-reta' || category === 'trucker') && (
                                 <div className="flex flex-wrap gap-2 pt-2">
                                     {[
-                                        { id: 'todos', label: 'Todos', path: '/catalogo/cria-do-morro' },
-                                        { id: 'vestuario', label: 'Vestuário', path: '/catalogo/vestuario' },
-                                        { id: 'bones', label: 'Aba Reta', path: '/catalogo/aba-reta' },
-                                        { id: 'bucket', label: 'Trucker', path: '/catalogo/trucker' }
-                                    ].map((sub) => (
-                                        <Link
-                                            key={sub.id}
-                                            to={sub.path}
-                                            className={cn(
-                                                "px-6 py-2 rounded-full text-sm font-bold uppercase tracking-wider transition-all duration-300 border-2 flex items-center justify-center min-w-[120px]",
-                                                selectedSubCategory === sub.id
-                                                    ? "bg-[var(--color-gold)] border-[var(--color-gold)] text-black"
-                                                    : "bg-transparent border-gray-800 text-gray-400 hover:border-[var(--color-gold)]/50"
-                                            )}
-                                        >
-                                            {sub.label}
-                                        </Link>
-                                    ))}
+                                        { id: 'todos', label: 'Todos', path: '/catalogo/cria-do-morro', isAlias: false },
+                                        { id: 'vestuario', label: 'Vestuário', path: '/catalogo/cria-do-morro', isAlias: false },
+                                        { id: 'bones', label: 'Aba Reta', path: '/catalogo/aba-reta', isAlias: true },
+                                        { id: 'bucket', label: 'Trucker', path: '/catalogo/trucker', isAlias: true }
+                                    ].map((sub) => {
+                                        const isActive = sub.isAlias
+                                            ? category === sub.id || (sub.id === 'bones' && category === 'aba-reta') || (sub.id === 'bucket' && category === 'trucker')
+                                            : category === 'cria-do-morro' && selectedSubCategory === sub.id;
+
+                                        return (
+                                            <Link
+                                                key={sub.id}
+                                                to={sub.path}
+                                                onClick={() => !sub.isAlias ? setSelectedSubCategory(sub.id) : setSelectedSubCategory('todos')}
+                                                className={cn(
+                                                    "px-6 py-2 rounded-full text-sm font-bold uppercase tracking-wider transition-all duration-300 border-2 flex items-center justify-center",
+                                                    isActive
+                                                        ? "bg-[var(--color-gold)] border-[var(--color-gold)] text-black"
+                                                        : "bg-transparent border-gray-800 text-gray-400 hover:border-[var(--color-gold)]/50"
+                                                )}
+                                            >
+                                                {sub.label}
+                                            </Link>
+                                        );
+                                    })}
                                 </div>
                             )}
 

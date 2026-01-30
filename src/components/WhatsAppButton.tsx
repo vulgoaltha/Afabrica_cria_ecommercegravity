@@ -16,7 +16,7 @@ const WhatsAppButton = () => {
         window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
     };
 
-    const closeTooltip = (e) => {
+    const closeTooltip = (e: React.MouseEvent) => {
         e.stopPropagation();
         setShowTooltip(false);
     };
