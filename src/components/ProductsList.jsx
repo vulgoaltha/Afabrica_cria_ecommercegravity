@@ -14,21 +14,44 @@ const ProductCard = ({ product, index }) => {
     const { toast } = useToast();
     const navigate = useNavigate();
 
-    const displayVariant = useMemo(() => product.variants[0], [product]);
-    const hasSale = useMemo(() => displayVariant && displayVariant.sale_price_in_cents !== null, [displayVariant]);
-    const displayPrice = useMemo(() => hasSale ? displayVariant.sale_price_formatted : displayVariant.price_formatted, [displayVariant, hasSale]);
-    const originalPrice = useMemo(() => hasSale ? displayVariant.price_formatted : null, [displayVariant, hasSale]);
+    const formatPrice = (value) => {
+        if (!value) return null;
+        if (typeof value === 'string') return value;
+        return new Intl.NumberFormat('pt-BR', {
+            style: 'currency',
+            currency: 'BRL',
+        }).format(value);
+    };
+
+    const displayVariant = useMemo(() => (product.variants && product.variants.length > 0) ? product.variants[0] : {}, [product]);
+
+    // Support new direct fields and fallback to variants/cents
+    const precoAtualValue = product.preco_atual !== undefined ? product.preco_atual : (displayVariant.sale_price_in_cents ? displayVariant.sale_price_in_cents / 100 : (displayVariant.price_in_cents ? displayVariant.price_in_cents / 100 : 0));
+    const precoAntigoValue = product.preco_antigo !== undefined ? product.preco_antigo : (displayVariant.sale_price_in_cents ? displayVariant.price_in_cents / 100 : null);
+
+    const displayPriceAtual = useMemo(() => formatPrice(precoAtualValue), [precoAtualValue]);
+    const displayPriceAntigo = useMemo(() => formatPrice(precoAntigoValue), [precoAntigoValue]);
+    const hasDiscount = !!displayPriceAntigo && precoAntigoValue > precoAtualValue;
+
+    const discountPercentage = useMemo(() => {
+        if (precoAntigoValue && precoAtualValue && precoAntigoValue > precoAtualValue) {
+            return Math.round(((precoAntigoValue - precoAtualValue) / precoAntigoValue) * 100);
+        }
+        return null;
+    }, [precoAntigoValue, precoAtualValue]);
 
     const handleAddToCart = useCallback(async (e) => {
         e.preventDefault();
         e.stopPropagation();
 
-        if (product.variants.length > 1) {
+        if (product.variants && product.variants.length > 1) {
             navigate(`/produto/${product.id}`);
             return;
         }
 
-        const defaultVariant = product.variants[0];
+        const defaultVariant = product.variants ? product.variants[0] : null;
+        if (!defaultVariant) return;
+
         const availableQuantity = defaultVariant.inventory_quantity;
 
         try {
@@ -56,28 +79,33 @@ const ProductCard = ({ product, index }) => {
                 <div className="rounded-xl border border-gray-800 bg-gray-900/50 backdrop-blur-sm shadow-lg overflow-hidden group transition-all duration-300 hover:shadow-premium-lg hover:border-[var(--color-gold)]/50 hover:-translate-y-1 h-full flex flex-col">
                     <div className="relative aspect-[4/5] overflow-hidden">
                         <img
-                            src={product.image || placeholderImage}
-                            alt={product.title}
+                            src={product.image || product.imagem || placeholderImage}
+                            alt={product.title || product.nome}
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
+                        {/* Discount Badge */}
+                        {discountPercentage && (
+                            <div className="absolute top-3 left-3 z-10 bg-red-600 text-white text-[10px] font-black px-2 py-1 rounded-md shadow-lg uppercase tracking-tighter animate-pulse">
+                                {discountPercentage}% OFF
+                            </div>
+                        )}
 
-
-                        <div className="absolute bottom-3 right-3 bg-black/80 backdrop-blur text-white text-xs font-bold px-3 py-1 rounded-full flex items-baseline gap-1.5 border border-white/10">
-                            {hasSale && (
-                                <span className="line-through opacity-70 text-gray-400">{originalPrice}</span>
+                        <div className="absolute bottom-3 right-3 bg-black/80 backdrop-blur text-white text-xs font-bold px-3 py-1.5 rounded-full flex items-baseline gap-2 border border-white/10 shadow-xl">
+                            {hasDiscount && (
+                                <span className="line-through opacity-50 text-gray-400 text-[10px]">{displayPriceAntigo}</span>
                             )}
-                            <span className="text-[var(--color-gold)]">{displayPrice}</span>
+                            <span className="text-[var(--color-gold)] text-sm font-bold">{displayPriceAtual}</span>
                         </div>
                     </div>
 
                     <div className="p-5 flex flex-col flex-grow">
                         <h3 className="text-lg font-bold truncate text-white group-hover:text-[var(--color-gold)] transition-colors uppercase">
-                            {product.title}
+                            {product.title || product.nome}
                         </h3>
                         <p className="text-sm text-gray-400 mt-2 line-clamp-2 flex-grow font-medium uppercase text-[10px] tracking-widest leading-relaxed">
-                            {product.subtitle || 'Qualidade excepcional A Fábrica Cria.'}
+                            {product.subtitle || 'Qualidade excepcional A Fabricah Cria.'}
                         </p>
                         <Button
                             onClick={handleAddToCart}

@@ -4,12 +4,17 @@ export interface Product {
     description: string;
     price_in_cents: number;
     sale_price_in_cents?: number;
+    preco_antigo?: number;
+    preco_atual?: number;
     images: string[];
+    image?: string;
+    nome?: string;
     category: string;
     stock_quantity: number;
     manage_inventory: boolean;
     variants?: ProductVariant[];
     created_at: string;
+    subtitle?: string;
 }
 
 export interface ProductVariant {
