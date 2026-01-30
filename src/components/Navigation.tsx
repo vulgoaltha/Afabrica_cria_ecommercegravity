@@ -1,15 +1,22 @@
-'use client';
-
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart, Menu, X, Search } from 'lucide-react';
 import { useCart } from '@/hooks/useCart';
 import { cn } from '@/lib/utils';
 import ShoppingCartComponent from '@/components/ShoppingCart';
-import Image from 'next/image';
 import logo from '@/assets/logo.webp';
+
+interface NavLink {
+    name: string;
+    path: string;
+    hasDropdown?: boolean;
+}
+
+interface DropdownItem {
+    name: string;
+    path: string;
+}
 
 const Navigation = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -17,7 +24,7 @@ const Navigation = () => {
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [isCatalogoDropdownOpen, setIsCatalogoDropdownOpen] = useState(false);
     const { cartItems } = useCart();
-    const pathname = usePathname();
+    const location = useLocation();
 
     useEffect(() => {
         const handleScroll = () => {
@@ -30,24 +37,24 @@ const Navigation = () => {
 
     useEffect(() => {
         setIsOpen(false);
-    }, [pathname]);
+    }, [location]);
 
-    const navLinks = [
+    const navLinks: NavLink[] = [
         { name: 'Home', path: '/' },
         { name: 'Catálogo', path: '/catalogo', hasDropdown: true },
         { name: 'Sobre', path: '/sobre' },
         { name: 'Contato', path: '/contato' },
     ];
 
-    const catalogoDropdownItems = [
+    const catalogoDropdownItems: DropdownItem[] = [
         { name: 'Todos Produtos', path: '/catalogo' },
-        { name: 'Cria do Morro', path: '/catalogo?categoria=cria-do-morro' },
-        { name: 'Bonés', path: '/catalogo?categoria=bones' },
-        { name: 'Bucket', path: '/catalogo?categoria=bucket' },
-        { name: 'Produtos Personalizados', path: '/catalogo?categoria=personalizados' },
+        { name: 'Cria do Morro', path: '/catalogo/cria-do-morro' },
+        { name: 'Bonés', path: '/catalogo/bones' },
+        { name: 'Bucket', path: '/catalogo/bucket' },
+        { name: 'Produtos Personalizados', path: '/catalogo/personalizados' },
     ];
 
-    const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+    const cartCount = cartItems.reduce((sum: number, item: any) => sum + item.quantity, 0);
 
     return (
         <>
@@ -62,20 +69,14 @@ const Navigation = () => {
                 <div className="container mx-auto px-4">
                     <div className="flex items-center justify-between h-16 md:h-20">
                         {/* Logo */}
-                        <Link href="/" className="flex items-center space-x-2 group z-50 relative">
-                            <motion.div
+                        <Link to="/" className="flex items-center space-x-2 group z-50 relative">
+                            <motion.img
+                                src={logo}
+                                alt="A Fabricah Cria Logo"
+                                className="h-10 md:h-12 w-auto object-contain"
                                 whileHover={{ scale: 1.05 }}
                                 transition={{ duration: 0.2 }}
-                            >
-                                <Image
-                                    src={logo}
-                                    alt="A Fábrica Cria Logo"
-                                    width={150}
-                                    height={50}
-                                    className="h-10 md:h-12 w-auto object-contain"
-                                    priority
-                                />
-                            </motion.div>
+                            />
                         </Link>
 
                         {/* Desktop Navigation */}
@@ -89,10 +90,10 @@ const Navigation = () => {
                                         onMouseLeave={() => setIsCatalogoDropdownOpen(false)}
                                     >
                                         <Link
-                                            href={link.path}
+                                            to={link.path}
                                             className={cn(
                                                 'text-sm font-medium transition-colors duration-300 relative group',
-                                                pathname === link.path || pathname.startsWith('/catalogo')
+                                                location.pathname === link.path || location.pathname.startsWith('/catalogo')
                                                     ? 'text-[var(--color-gold)]'
                                                     : 'text-white hover:text-[var(--color-gold)]'
                                             )}
@@ -101,7 +102,7 @@ const Navigation = () => {
                                             <span
                                                 className={cn(
                                                     'absolute -bottom-1 left-0 h-0.5 bg-[var(--color-gold)] transition-all duration-300',
-                                                    pathname.startsWith('/catalogo') ? 'w-full' : 'w-0 group-hover:w-full'
+                                                    location.pathname.startsWith('/catalogo') ? 'w-full' : 'w-0 group-hover:w-full'
                                                 )}
                                             />
                                         </Link>
@@ -119,7 +120,7 @@ const Navigation = () => {
                                                     {catalogoDropdownItems.map((item, index) => (
                                                         <Link
                                                             key={item.path}
-                                                            href={item.path}
+                                                            to={item.path}
                                                             className={cn(
                                                                 'block px-4 py-3 text-sm transition-colors duration-200',
                                                                 'text-white hover:bg-[var(--color-gold)]/10 hover:text-[var(--color-gold)]',
@@ -136,10 +137,10 @@ const Navigation = () => {
                                 ) : (
                                     <Link
                                         key={link.path}
-                                        href={link.path}
+                                        to={link.path}
                                         className={cn(
                                             'text-sm font-medium transition-colors duration-300 relative group',
-                                            pathname === link.path
+                                            location.pathname === link.path
                                                 ? 'text-[var(--color-gold)]'
                                                 : 'text-white hover:text-[var(--color-gold)]'
                                         )}
@@ -148,7 +149,7 @@ const Navigation = () => {
                                         <span
                                             className={cn(
                                                 'absolute -bottom-1 left-0 h-0.5 bg-[var(--color-gold)] transition-all duration-300',
-                                                pathname === link.path ? 'w-full' : 'w-0 group-hover:w-full'
+                                                location.pathname === link.path ? 'w-full' : 'w-0 group-hover:w-full'
                                             )}
                                         />
                                     </Link>
@@ -159,7 +160,7 @@ const Navigation = () => {
                         {/* Right Icons */}
                         <div className="flex items-center space-x-4">
                             <Link
-                                href="/catalogo"
+                                to="/catalogo"
                                 className="p-2 hover:bg-[var(--color-gold)]/10 rounded-lg transition-colors duration-300"
                             >
                                 <Search className="w-5 h-5 text-white hover:text-[var(--color-gold)] transition-colors" />
@@ -212,7 +213,7 @@ const Navigation = () => {
                                                     onClick={() => setIsCatalogoDropdownOpen(!isCatalogoDropdownOpen)}
                                                     className={cn(
                                                         'w-full text-left py-3 px-4 rounded-lg transition-colors duration-300 text-lg flex items-center justify-between',
-                                                        pathname.startsWith('/catalogo')
+                                                        location.pathname.startsWith('/catalogo')
                                                             ? 'bg-[var(--color-gold)]/20 text-[var(--color-gold)]'
                                                             : 'text-white hover:bg-[var(--color-gold)]/10 hover:text-[var(--color-gold)]'
                                                     )}
@@ -239,7 +240,7 @@ const Navigation = () => {
                                                             {catalogoDropdownItems.map((item) => (
                                                                 <Link
                                                                     key={item.path}
-                                                                    href={item.path}
+                                                                    to={item.path}
                                                                     className="block py-2 px-4 rounded-lg text-sm text-white hover:bg-[var(--color-gold)]/10 hover:text-[var(--color-gold)] transition-colors duration-200"
                                                                 >
                                                                     {item.name}
@@ -252,10 +253,10 @@ const Navigation = () => {
                                         ) : (
                                             <Link
                                                 key={link.path}
-                                                href={link.path}
+                                                to={link.path}
                                                 className={cn(
                                                     'block py-3 px-4 rounded-lg transition-colors duration-300 text-lg',
-                                                    pathname === link.path
+                                                    location.pathname === link.path
                                                         ? 'bg-[var(--color-gold)]/20 text-[var(--color-gold)]'
                                                         : 'text-white hover:bg-[var(--color-gold)]/10 hover:text-[var(--color-gold)]'
                                                 )}

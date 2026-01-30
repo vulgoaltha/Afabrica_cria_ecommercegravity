@@ -1,23 +1,22 @@
-'use client';
-
-import React from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useCallback, useMemo } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart as ShoppingCartIcon, X, Trash2, Plus, Minus } from 'lucide-react';
 import { useCart } from '@/hooks/useCart';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import Image from 'next/image';
+import { useToast } from '@/components/ui/use-toast';
+import { calculateProductPrices } from '@/api/EcommerceApi';
+import { CartItem } from '@/types';
 
 interface ShoppingCartProps {
     isCartOpen: boolean;
     setIsCartOpen: (isOpen: boolean) => void;
 }
 
-const ShoppingCartComponent: React.FC<ShoppingCartProps> = ({ isCartOpen, setIsCartOpen }) => {
+const ShoppingCart = ({ isCartOpen, setIsCartOpen }: ShoppingCartProps) => {
     const { toast } = useToast();
-    const router = useRouter();
-    const { cartItems, removeFromCart, updateQuantity, getCartTotal } = useCart();
+    const navigate = useNavigate();
+    const { cartItems, removeFromCart, updateQuantity, getCartTotal, clearCart } = useCart();
 
     const handleCheckout = () => {
         if (cartItems.length === 0) {
@@ -29,7 +28,7 @@ const ShoppingCartComponent: React.FC<ShoppingCartProps> = ({ isCartOpen, setIsC
             return;
         }
         setIsCartOpen(false);
-        router.push('/checkout');
+        navigate('/checkout');
     };
 
     return (
@@ -79,16 +78,13 @@ const ShoppingCartComponent: React.FC<ShoppingCartProps> = ({ isCartOpen, setIsC
                                     </Button>
                                 </div>
                             ) : (
-                                cartItems.map(item => (
+                                cartItems.map((item: CartItem) => (
                                     <div key={item.variant.id} className="flex gap-4 bg-gray-900/50 p-4 rounded-xl border border-gray-800">
-                                        <div className="relative w-20 h-20 flex-shrink-0">
-                                            <Image
-                                                src={item.product.images[0] || ''}
-                                                alt={item.product.title}
-                                                fill
-                                                className="object-cover rounded-lg border border-gray-700"
-                                            />
-                                        </div>
+                                        <img
+                                            src={item.product.image}
+                                            alt={item.product.title}
+                                            className="w-20 h-20 object-cover rounded-lg border border-gray-700"
+                                        />
                                         <div className="flex-grow flex flex-col justify-between">
                                             <div>
                                                 <h3 className="font-bold text-white text-xs uppercase line-clamp-1">{item.product.title}</h3>
@@ -96,7 +92,7 @@ const ShoppingCartComponent: React.FC<ShoppingCartProps> = ({ isCartOpen, setIsC
                                             </div>
                                             <div className="flex items-center justify-between mt-2">
                                                 <p className="text-sm text-[var(--color-gold)] font-black">
-                                                    {(item.variant.sale_price_in_cents ?? item.variant.price_in_cents) / 100}
+                                                    {calculateProductPrices(item.product, item.variant).displayPrice}
                                                 </p>
 
                                                 <div className="flex items-center bg-black/50 rounded-lg border border-gray-700">
@@ -148,4 +144,4 @@ const ShoppingCartComponent: React.FC<ShoppingCartProps> = ({ isCartOpen, setIsC
     );
 };
 
-export default ShoppingCartComponent;
+export default ShoppingCart;

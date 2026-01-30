@@ -5,9 +5,14 @@ import { Link, useLocation } from 'react-router-dom';
 import { CheckCircle, ArrowRight, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+interface SuccessPageState {
+    orderId?: string;
+    email?: string;
+}
+
 const SuccessPage = () => {
     const location = useLocation();
-    const { orderId, email } = location.state || {};
+    const { orderId, email } = (location.state as SuccessPageState) || {};
 
     return (
         <>

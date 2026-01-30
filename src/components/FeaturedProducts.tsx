@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/hooks/useCart';
 import { useToast } from '@/components/ui/use-toast';
-import { getProducts } from '@/api/EcommerceApi';
+import { getProducts, calculateProductPrices } from '@/api/EcommerceApi';
 
 const FeaturedProducts = () => {
     const { addToCart } = useCart();
@@ -71,8 +71,7 @@ const FeaturedProducts = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {products.map((product, index) => {
-                        const variant = product.variants[0];
-                        const price = variant?.sale_price_formatted || variant?.price_formatted;
+                        const priceInfo = calculateProductPrices(product);
 
                         return (
                             <motion.div
@@ -92,6 +91,12 @@ const FeaturedProducts = () => {
                                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                                         />
 
+                                        {/* Discount Badge */}
+                                        {priceInfo.discountPercentage && (
+                                            <div className="absolute top-3 left-3 z-10 bg-red-600 text-white text-[10px] font-black px-2 py-1 rounded-md shadow-lg uppercase tracking-tighter animate-pulse">
+                                                {priceInfo.discountPercentage}% OFF
+                                            </div>
+                                        )}
                                     </Link>
 
                                     {/* Content */}
@@ -108,9 +113,14 @@ const FeaturedProducts = () => {
                                         </div>
 
                                         <div className="flex items-center justify-between pt-4 border-t border-gray-800">
-                                            <div>
+                                            <div className="flex flex-col">
+                                                {priceInfo.hasDiscount && (
+                                                    <span className="text-xs line-through text-gray-500 font-medium">
+                                                        {priceInfo.displayOldPrice}
+                                                    </span>
+                                                )}
                                                 <span className="text-2xl font-bold text-[var(--color-gold)]">
-                                                    {price}
+                                                    {priceInfo.displayPrice}
                                                 </span>
                                             </div>
                                             <div className="flex gap-2">

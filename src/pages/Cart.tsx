@@ -6,11 +6,13 @@ import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft } from 'lucide-react';
 import { useCart } from '@/hooks/useCart';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { calculateProductPrices } from '@/api/EcommerceApi';
+import { CartItem } from '@/types';
 
 const Cart = () => {
     const { cartItems, removeFromCart, updateQuantity, getCartTotal } = useCart();
 
-    const handleRemove = (variantId) => {
+    const handleRemove = (variantId: string) => {
         if (window.confirm('Deseja remover este item do carrinho?')) {
             removeFromCart(variantId);
         }
@@ -80,7 +82,7 @@ const Cart = () => {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         {/* Cart Items */}
                         <div className="lg:col-span-2 space-y-4">
-                            {cartItems.map((item, index) => (
+                            {cartItems.map((item: CartItem, index: number) => (
                                 <motion.div
                                     key={item.variant.id}
                                     initial={{ opacity: 0, x: -20 }}
@@ -150,7 +152,7 @@ const Cart = () => {
                                                 {/* Price & Remove */}
                                                 <div className="flex items-center gap-4">
                                                     <span className="text-2xl font-bold text-dourado">
-                                                        {item.variant.sale_price_formatted || item.variant.price_formatted}
+                                                        {calculateProductPrices(item.product, item.variant).displayPrice}
                                                     </span>
                                                     <button
                                                         onClick={() => handleRemove(item.variant.id)}

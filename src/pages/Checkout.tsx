@@ -8,6 +8,26 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/lib/supabase';
+import { calculateProductPrices } from '@/api/EcommerceApi';
+import { CartItem } from '@/types';
+
+interface CheckoutFormData {
+    fullName: string;
+    cpf: string;
+    phone: string;
+    email: string;
+    cep: string;
+    street: string;
+    number: string;
+    complement: string;
+    city: string;
+    state: string;
+    paymentMethod: string;
+}
+
+interface CheckoutErrors {
+    [key: string]: string;
+}
 
 const Checkout = () => {
     const navigate = useNavigate();
@@ -15,7 +35,7 @@ const Checkout = () => {
     const { toast } = useToast();
     const [isProcessing, setIsProcessing] = useState(false);
 
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<CheckoutFormData>({
         fullName: '',
         cpf: '',
         phone: '',
@@ -29,13 +49,13 @@ const Checkout = () => {
         paymentMethod: 'pix', // pix, card, boleto
     });
 
-    const [errors, setErrors] = useState({});
+    const [errors, setErrors] = useState<CheckoutErrors>({});
 
     const subtotal = getRawTotal() / 100;
-    const shipping = 0; // Frete grátis por enquanto
+    const shipping: number = 0; // Frete grátis por enquanto
     const grandTotal = subtotal + shipping;
 
-    const handleChange = (e) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
         if (errors[name]) {
@@ -66,7 +86,7 @@ const Checkout = () => {
     };
 
     const validateForm = () => {
-        const newErrors = {};
+        const newErrors: CheckoutErrors = {};
         if (!formData.fullName.trim()) newErrors.fullName = 'Nome completo é obrigatório';
         if (!formData.cpf.trim()) newErrors.cpf = 'CPF é obrigatório';
         if (!formData.phone.trim()) newErrors.phone = 'Telefone é obrigatório';
@@ -81,7 +101,7 @@ const Checkout = () => {
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         if (!validateForm()) {
@@ -97,19 +117,15 @@ const Checkout = () => {
 
         try {
             // Preparar itens sanitizados
-            const cleanItems = cartItems.map(item => {
-                let finalPrice = 0;
-                if (typeof item.variant.price === 'number') finalPrice = item.variant.price;
-                else if (typeof item.variant.price_in_cents === 'number') finalPrice = item.variant.price_in_cents / 100;
-                else if (typeof item.variant.sale_price_in_cents === 'number') finalPrice = item.variant.sale_price_in_cents / 100;
-                if (isNaN(finalPrice)) finalPrice = 0;
+            const cleanItems = cartItems.map((item: CartItem) => {
+                const { currentPrice } = calculateProductPrices(item.product, item.variant);
 
                 return {
                     productId: String(item.product.id || 'N/A'),
                     title: String(item.product.title || 'Produto Sem Nome'),
-                    price: finalPrice,
+                    price: currentPrice,
                     quantity: Number(item.quantity) || 1,
-                    size: String(item.variant.size || 'U'),
+                    size: String((item.variant as any).size || 'U'),
                     image: String(item.product.image || '')
                 };
             });
@@ -433,7 +449,7 @@ const Checkout = () => {
                                 <h2 className="text-xl font-bold uppercase tracking-wide">Resumo</h2>
 
                                 <div className="space-y-4 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
-                                    {cartItems.map((item) => (
+                                    {cartItems.map((item: CartItem) => (
                                         <div key={item.variant.id} className="flex gap-3 pb-3 border-b border-gray-800 last:border-0">
                                             <img
                                                 src={item.product.image}
@@ -446,7 +462,7 @@ const Checkout = () => {
                                                     {item.variant.title} x {item.quantity}
                                                 </p>
                                                 <p className="text-[var(--color-gold)] text-xs font-bold mt-1">
-                                                    {item.variant.sale_price_formatted || item.variant.price_formatted}
+                                                    {calculateProductPrices(item.product, item.variant).displayPrice}
                                                 </p>
                                             </div>
                                         </div>

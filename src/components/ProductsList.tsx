@@ -1,41 +1,69 @@
-'use client';
-
 import React, { useCallback, useMemo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart, Loader2 } from 'lucide-react';
 import { useCart } from '@/hooks/useCart';
-import { useToast } from '@/hooks/use-toast';
-import { getProducts } from '@/api/EcommerceApi';
-import Image from 'next/image';
+import { useToast } from '@/components/ui/use-toast';
+import { getProducts, getProductQuantities, calculateProductPrices } from '@/api/EcommerceApi';
 import { Product } from '@/types';
 
 const placeholderImage = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMzc0MTUxIi8+CiAgPHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzlDQTNBRiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pgo8L3N2Zz4K";
 
-const ProductCard = ({ product, index }: { product: Product, index: number }) => {
+interface ProductCardProps {
+    product: Product;
+    index: number;
+}
+
+const ProductCard = ({ product, index }: ProductCardProps) => {
     const { addToCart } = useCart();
     const { toast } = useToast();
-    const router = useRouter();
+    const navigate = useNavigate();
 
-    const displayVariant = useMemo(() => product.variants?.[0], [product]);
-    const price = (displayVariant?.sale_price_in_cents ?? displayVariant?.price_in_cents ?? 0) / 100;
-    const originalPrice = displayVariant?.price_in_cents ? displayVariant.price_in_cents / 100 : null;
-    const hasSale = displayVariant?.sale_price_in_cents !== null && displayVariant?.sale_price_in_cents !== displayVariant?.price_in_cents;
+    const formatPrice = (value: number | string | null | undefined) => {
+        if (!value) return null;
+        if (typeof value === 'string') return value;
+        return new Intl.NumberFormat('pt-BR', {
+            style: 'currency',
+            currency: 'BRL',
+        }).format(value);
+    };
+
+    const displayVariant = useMemo(() => (product.variants && product.variants.length > 0) ? product.variants[0] : {}, [product]);
+
+    const priceInfo = useMemo(() => calculateProductPrices(product, displayVariant), [product, displayVariant]);
+
+    const {
+        displayPrice: displayPriceAtual,
+        displayOldPrice: displayPriceAntigo,
+        hasDiscount,
+        discountPercentage
+    } = priceInfo;
+
+    // Debug logging (temporary) - Cleaned
+    if (product.title === 'Jaqueta Corta-Vento' || product.preco_antigo || product.preco_atual) {
+        console.log('🔍 PRODUTO COM DESCONTO:', product.title, {
+            ...priceInfo,
+            'produto completo': product
+        });
+    }
 
     const handleAddToCart = useCallback(async (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
 
-        if (!product.variants || product.variants.length > 1) {
-            router.push(`/product/${product.id}`);
+        if (product.variants && product.variants.length > 1) {
+            navigate(`/produto/${product.id}`);
             return;
         }
 
-        const defaultVariant = product.variants[0];
+        const defaultVariant = product.variants ? product.variants[0] : null;
+        if (!defaultVariant) return;
+
+        const availableQuantity = defaultVariant.stock_quantity;
+
         try {
-            await addToCart(product, defaultVariant, 1, defaultVariant.stock_quantity);
+            await addToCart(product, defaultVariant, 1, availableQuantity);
             toast({
                 title: "Adicionado ao Carrinho! 🛒",
                 description: `${product.title} foi adicionado ao seu carrinho.`,
@@ -47,7 +75,7 @@ const ProductCard = ({ product, index }: { product: Product, index: number }) =>
                 variant: "destructive"
             });
         }
-    }, [product, addToCart, toast, router]);
+    }, [product, addToCart, toast, navigate]);
 
     return (
         <motion.div
@@ -55,26 +83,28 @@ const ProductCard = ({ product, index }: { product: Product, index: number }) =>
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: index * 0.05 }}
         >
-            <Link href={`/product/${product.id}`}>
+            <Link to={`/produto/${product.id}`}>
                 <div className="rounded-xl border border-gray-800 bg-gray-900/50 backdrop-blur-sm shadow-lg overflow-hidden group transition-all duration-300 hover:shadow-premium-lg hover:border-[var(--color-gold)]/50 hover:-translate-y-1 h-full flex flex-col">
                     <div className="relative aspect-[4/5] overflow-hidden">
-                        <Image
-                            src={product.images[0] || placeholderImage}
+                        <img
+                            src={product.image || placeholderImage}
                             alt={product.title}
-                            fill
-                            className="object-cover transition-transform duration-500 group-hover:scale-110"
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-                        <div className="absolute bottom-3 right-3 bg-black/80 backdrop-blur text-white text-xs font-bold px-3 py-1 rounded-full flex items-baseline gap-1.5 border border-white/10">
-                            {hasSale && (
-                                <span className="line-through opacity-70 text-gray-400">
-                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(originalPrice!)}
-                                </span>
+                        {/* Discount Badge */}
+                        {discountPercentage && (
+                            <div className="absolute top-3 left-3 z-10 bg-red-600 text-white text-[10px] font-black px-2 py-1 rounded-md shadow-lg uppercase tracking-tighter animate-pulse">
+                                {discountPercentage}% OFF
+                            </div>
+                        )}
+
+                        <div className="absolute bottom-3 right-3 bg-black/80 backdrop-blur text-white text-xs font-bold px-3 py-1.5 rounded-full flex items-baseline gap-2 border border-white/10 shadow-xl">
+                            {hasDiscount && (
+                                <span className="line-through opacity-50 text-gray-400 text-[10px]">{displayPriceAntigo}</span>
                             )}
-                            <span className="text-[var(--color-gold)]">
-                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price)}
-                            </span>
+                            <span className="text-[var(--color-gold)] text-sm font-bold">{displayPriceAtual}</span>
                         </div>
                     </div>
 
@@ -83,7 +113,7 @@ const ProductCard = ({ product, index }: { product: Product, index: number }) =>
                             {product.title}
                         </h3>
                         <p className="text-sm text-gray-400 mt-2 line-clamp-2 flex-grow font-medium uppercase text-[10px] tracking-widest leading-relaxed">
-                            {product.description || 'Qualidade excepcional A Fábrica Cria.'}
+                            {product.subtitle || 'Qualidade excepcional A Fabricah Cria.'}
                         </p>
                         <Button
                             onClick={handleAddToCart}
@@ -98,17 +128,49 @@ const ProductCard = ({ product, index }: { product: Product, index: number }) =>
     );
 };
 
-const ProductsList = () => {
+const ProductsList = ({ limit }: { limit?: number }) => {
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        const fetchProducts = async () => {
+        const fetchProductsWithQuantities = async () => {
             try {
                 setLoading(true);
-                const response = await getProducts();
-                setProducts(response.products);
+                setError(null);
+
+                // 1. Fetch products first
+                const productsResponse = await getProducts();
+
+                if (!productsResponse.products || productsResponse.products.length === 0) {
+                    setProducts([]);
+                    return;
+                }
+
+                const initialProducts = productsResponse.products;
+                setProducts(initialProducts); // Render immediately
+                setLoading(false); // Stop loading indicator early
+
+                // 2. Fetch quantities in background
+                const productIds = initialProducts.map(p => p.id);
+                const quantitiesResponse = await getProductQuantities({
+                    product_ids: productIds
+                });
+
+                if (quantitiesResponse?.variants) {
+                    const variantQuantityMap = new Map<string, number>();
+                    quantitiesResponse.variants.forEach((v: any) => {
+                        variantQuantityMap.set(v.id, v.stock_quantity);
+                    });
+
+                    setProducts(prevProducts => prevProducts.map(product => ({
+                        ...product,
+                        variants: product.variants?.map(variant => ({
+                            ...variant,
+                            stock_quantity: variantQuantityMap.get(variant.id) ?? variant.stock_quantity
+                        }))
+                    })));
+                }
             } catch (err: any) {
                 setError(err.message || 'Falha ao carregar produtos');
             } finally {
@@ -116,7 +178,7 @@ const ProductsList = () => {
             }
         };
 
-        fetchProducts();
+        fetchProductsWithQuantities();
     }, []);
 
     if (loading) {
@@ -143,9 +205,11 @@ const ProductsList = () => {
         );
     }
 
+    const displayedProducts = limit ? products.slice(0, limit) : products;
+
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {products.slice(0, 8).map((product, index) => (
+            {displayedProducts.map((product, index) => (
                 <ProductCard key={product.id} product={product} index={index} />
             ))}
         </div>

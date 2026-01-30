@@ -33,12 +33,12 @@
         import { supabase } from '../js/supabase.js';
 
         const ORIGINAL_PRODUCTS = [
-            { title: "Camiseta", description: "Camiseta de alta qualidade com personalização.", price_in_cents: 8990, image: "/img/products/chave.png", category: "Camisetas", customizable: true, stock: 50, sizes: ['P', 'M', 'G', 'GG', 'XG'] },
-            { title: "Calção Esportivo", description: "Calção leve e resistente.", price_in_cents: 5990, image: "/img/products/cavadinha.png", category: "Calções", customizable: true, stock: 50, sizes: ['P', 'M', 'G', 'GG'] },
-            { title: "Short Passeio", description: "Conforto e lazer.", price_in_cents: 2990, image: "/img/products/passeio.png", category: "Shorts", customizable: false, stock: 50, sizes: ['P', 'M', 'G', 'GG'] },
-            { title: "Boné Trucker", description: "Boné estilo trucker.", price_in_cents: 4990, image: "/img/products/Boné 3.png", category: "Bonés", customizable: true, stock: 50, sizes: ['U'] },
-            { title: "Jaqueta Corta-Vento", description: "Leve e impermeável.", price_in_cents: 18990, image: "/img/products/kebrada com manga.png", category: "Jaquetas", customizable: true, stock: 20, sizes: ['P', 'M', 'G', 'GG'] },
-            { title: "Polo Casual", description: "Clássica e moderna.", price_in_cents: 7990, image: "/img/products/malako.png", category: "Polos", customizable: true, stock: 50, sizes: ['P', 'M', 'G', 'GG'] }
+            { title: "Camiseta", description: "Camiseta de alta qualidade com personalização.", price_in_cents: 8990, image: "/img/products/chave.png", category: "cria-do-morro", customizable: true, stock: 50, sizes: ['P', 'M', 'G', 'GG', 'XG'] },
+            { title: "Calção Esportivo", description: "Calção leve e resistente.", price_in_cents: 5990, image: "/img/products/cavadinha.png", category: "cria-do-morro", customizable: true, stock: 50, sizes: ['P', 'M', 'G', 'GG'] },
+            { title: "Short Passeio", description: "Conforto e lazer.", price_in_cents: 2990, image: "/img/products/passeio.png", category: "cria-do-morro", customizable: false, stock: 50, sizes: ['P', 'M', 'G', 'GG'] },
+            { title: "Boné Trucker", description: "Boné estilo trucker.", price_in_cents: 4990, image: "/img/products/Boné 3.png", category: "bones", customizable: true, stock: 50, sizes: ['U'] },
+            { title: "Jaqueta Corta-Vento", description: "Leve e impermeável.", price_in_cents: 18990, image: "/img/products/kebrada com manga.png", category: "personalizados", customizable: true, stock: 20, sizes: ['P', 'M', 'G', 'GG'] },
+            { title: "Polo Casual", description: "Clássica e moderna.", price_in_cents: 7990, image: "/img/products/malako.png", category: "cria-do-morro", customizable: true, stock: 50, sizes: ['P', 'M', 'G', 'GG'] }
         ];
 
         const BTN = document.getElementById('btnRestore');
@@ -62,15 +62,15 @@
                 }
 
                 // 2. Create 80 Random
-                STATUS.innerText += `\nCriando mais 80 produtos...`;
-                const randomProducts = [];
-                for (let i = 1; i <= 80; i++) {
+                const categories = ['cria-do-morro', 'bones', 'bucket', 'personalizados'];
+                for (let i = 1; i <= 160; i++) {
+                    const category = categories[Math.floor((i - 1) / 40)];
                     randomProducts.push({
-                        title: `Produto Exemplo #${i}`,
-                        description: "Descrição automática.",
+                        title: `${category.replace(/-/g, ' ').toUpperCase()} #${i}`,
+                        description: "Descrição automática para este produto exclusivo.",
                         price_in_cents: Math.floor(Math.random() * 20000) + 5000,
                         image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800&q=80",
-                        category: "Geral",
+                        category: category,
                         sizes: ['P', 'M', 'G'],
                         stock: 100
                     });

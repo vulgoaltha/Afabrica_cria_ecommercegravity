@@ -6,14 +6,14 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import ScrollToTop from '@/components/ScrollToTop';
 import WhatsAppButton from '@/components/WhatsAppButton';
-import HomePage from '@/pages/HomePage.jsx';
-import ProductCatalog from '@/pages/ProductCatalog.jsx';
-import ProductDetailPage from '@/pages/ProductDetailPage.jsx';
-import Cart from '@/pages/Cart.jsx';
-import Checkout from '@/pages/Checkout.jsx';
-import About from '@/pages/About.jsx';
-import QuoteForm from '@/pages/QuoteForm.jsx';
-import SuccessPage from '@/pages/SuccessPage.jsx';
+import HomePage from '@/pages/HomePage';
+import ProductCatalog from '@/pages/ProductCatalog';
+import ProductDetailPage from '@/pages/ProductDetailPage';
+import Cart from '@/pages/Cart';
+import Checkout from '@/pages/Checkout';
+import About from '@/pages/About';
+import QuoteForm from '@/pages/QuoteForm';
+import SuccessPage from '@/pages/SuccessPage';
 
 function App() {
     return (

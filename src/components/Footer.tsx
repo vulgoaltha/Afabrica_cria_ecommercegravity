@@ -1,20 +1,17 @@
-'use client';
-
 import React, { useState } from 'react';
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Facebook, Instagram, Linkedin, Mail, Phone, MapPin, Send } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import Image from 'next/image';
 import logo from '@/assets/logo.webp';
 
 const Footer = () => {
     const [email, setEmail] = useState('');
     const { toast } = useToast();
 
-    const handleNewsletterSubmit = (e: React.FormEvent) => {
+    const handleNewsletterSubmit = (e) => {
         e.preventDefault();
         if (email) {
             toast({
@@ -50,19 +47,14 @@ const Footer = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
                     {/* Company Info */}
                     <div className="space-y-4">
-                        <Link href="/" className="inline-block">
-                            <motion.div
+                        <Link to="/" className="inline-block">
+                            <motion.img
+                                src={logo}
+                                alt="A Fabricah Cria Logo"
+                                className="h-10 w-auto object-contain"
                                 whileHover={{ scale: 1.05 }}
                                 transition={{ duration: 0.2 }}
-                            >
-                                <Image
-                                    src={logo}
-                                    alt="A Fabricah Cria Logo"
-                                    width={120}
-                                    height={40}
-                                    className="h-10 w-auto object-contain"
-                                />
-                            </motion.div>
+                            />
                         </Link>
                         <p className="text-gray-400 text-sm leading-relaxed">
                             Especialistas em uniformes personalizados para equipes, empresas e eventos.
@@ -92,7 +84,7 @@ const Footer = () => {
                             {quickLinks.map((link) => (
                                 <li key={link.path}>
                                     <Link
-                                        href={link.path}
+                                        to={link.path}
                                         className="text-gray-400 hover:text-[var(--color-gold)] transition-colors duration-300 text-sm font-medium"
                                     >
                                         {link.name}

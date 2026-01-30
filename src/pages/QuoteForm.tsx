@@ -7,10 +7,24 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 
+interface QuoteFormData {
+    name: string;
+    email: string;
+    phone: string;
+    company: string;
+    uniformType: string;
+    quantity: string;
+    description: string;
+}
+
+interface QuoteErrors {
+    [key: string]: string;
+}
+
 const QuoteForm = () => {
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<QuoteFormData>({
         name: '',
         email: '',
         phone: '',
@@ -19,9 +33,9 @@ const QuoteForm = () => {
         quantity: '',
         description: '',
     });
-    const [errors, setErrors] = useState({});
+    const [errors, setErrors] = useState<QuoteErrors>({});
 
-    const handleChange = (e) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
         if (errors[name]) {
@@ -30,7 +44,7 @@ const QuoteForm = () => {
     };
 
     const validateForm = () => {
-        const newErrors = {};
+        const newErrors: QuoteErrors = {};
 
         if (!formData.name.trim()) newErrors.name = 'Nome é obrigatório';
         if (!formData.email.trim()) {
@@ -46,7 +60,7 @@ const QuoteForm = () => {
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         if (!validateForm()) {
@@ -126,7 +140,6 @@ const QuoteForm = () => {
                                     type="text"
                                     value={formData.name}
                                     onChange={handleChange}
-                                    error={errors.name}
                                     placeholder="Seu nome"
                                 />
                                 {errors.name && (
@@ -145,7 +158,6 @@ const QuoteForm = () => {
                                     type="email"
                                     value={formData.email}
                                     onChange={handleChange}
-                                    error={errors.email}
                                     placeholder="seu@email.com"
                                 />
                                 {errors.email && (
@@ -164,7 +176,6 @@ const QuoteForm = () => {
                                     type="tel"
                                     value={formData.phone}
                                     onChange={handleChange}
-                                    error={errors.phone}
                                     placeholder="(11) 98765-4321"
                                 />
                                 {errors.phone && (
@@ -227,7 +238,6 @@ const QuoteForm = () => {
                                     type="number"
                                     value={formData.quantity}
                                     onChange={handleChange}
-                                    error={errors.quantity}
                                     placeholder="Ex: 50"
                                     min="1"
                                 />
