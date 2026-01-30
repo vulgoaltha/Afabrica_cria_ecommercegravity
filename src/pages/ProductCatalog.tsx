@@ -17,9 +17,19 @@ const ProductCatalog = () => {
     const [loading, setLoading] = useState(true);
     const [selectedSubCategory, setSelectedSubCategory] = useState<string>('todos');
     const [searchTerm, setSearchTerm] = useState('');
+    const { toast } = useToast();
     const { category } = useParams();
     const { addToCart } = useCart();
-    const { toast } = useToast();
+
+    useEffect(() => {
+        if (category === 'aba-reta') {
+            setSelectedSubCategory('bones');
+        } else if (category === 'trucker') {
+            setSelectedSubCategory('bucket');
+        } else if (category !== 'cria-do-morro') {
+            setSelectedSubCategory('todos');
+        }
+    }, [category]);
 
     useEffect(() => {
         const fetchProducts = async () => {
@@ -46,11 +56,17 @@ const ProductCatalog = () => {
 
         // Filter by category from URL
         if (category) {
-            filtered = filtered.filter(p => p.category === category);
+            if (category === 'aba-reta' || category === 'trucker') {
+                filtered = filtered.filter(p => p.category === 'cria-do-morro');
+                const sub = category === 'aba-reta' ? 'bones' : 'bucket';
+                filtered = filtered.filter(p => p.sub_category === sub);
+            } else {
+                filtered = filtered.filter(p => p.category === category);
 
-            // Apply sub-category filter if in cria-do-morro
-            if (category === 'cria-do-morro' && selectedSubCategory !== 'todos') {
-                filtered = filtered.filter(p => p.sub_category === selectedSubCategory);
+                // Apply sub-category filter if in cria-do-morro
+                if (category === 'cria-do-morro' && selectedSubCategory !== 'todos') {
+                    filtered = filtered.filter(p => p.sub_category === selectedSubCategory);
+                }
             }
         }
 
@@ -115,7 +131,10 @@ const ProductCatalog = () => {
                         className="mb-12 text-center"
                     >
                         <h1 className="font-poppins text-4xl md:text-5xl font-bold mb-4">
-                            {category ? <>Nossos <span className="text-gradient">{categoryTitle}</span></> : <>Nosso <span className="text-gradient">Catálogo</span></>}
+                            {category === 'aba-reta' ? <>Sessão <span className="text-gradient">Aba Reta</span></> :
+                                category === 'trucker' ? <>Sessão <span className="text-gradient">Trucker</span></> :
+                                    category ? <>Nossos <span className="text-gradient">{categoryTitle}</span></> :
+                                        <>Nosso <span className="text-gradient">Catálogo</span></>}
                         </h1>
                         <p className="text-gray-400 text-lg max-w-2xl mx-auto">
                             {category ? `Explorando itens da categoria ${categoryTitle}` : 'Encontre o uniforme perfeito para sua equipe ou empresa'}
