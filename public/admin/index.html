@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - A Fabricah Cria</title>
+    <link rel="stylesheet" href="admin.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+    <!-- Header -->
+    <header class="border-b border-gray-800 bg-[#1A1A1A] sticky top-0 z-50">
+        <div class="admin-container py-4 flex justify-between items-center">
+            <h1 class="text-xl font-bold text-[#D4AF37]">Admin Panel</h1>
+            <div class="flex items-center gap-4">
+                <span id="userEmail" class="text-sm text-gray-400"></span>
+                <button id="logoutBtn" class="text-sm text-red-500 hover:text-red-400">Sair</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="admin-container py-8 relative">
+
+        <!-- Tabs -->
+        <div class="flex gap-4 mb-8 border-b border-gray-800 pb-4">
+            <button class="tab-btn active text-[#D4AF37] font-semibold border-b-2 border-[#D4AF37] pb-4 px-2"
+                data-tab="pedidos">
+                Pedidos
+            </button>
+            <button class="tab-btn text-gray-400 hover:text-white pb-4 px-2 transition-colors" data-tab="produtos">
+                Produtos
+            </button>
+        </div>
+
+        <!-- Conteúdo: Pedidos -->
+        <div id="tab-pedidos" class="tab-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">Pedidos Recentes</h2>
+                <button id="refreshOrders"
+                    class="btn border border-gray-700 hover:bg-gray-800 text-sm">Atualizar</button>
+            </div>
+            <div class="card overflow-hidden">
+                <div class="table-container">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="text-left border-b border-gray-800">
+                                <th class="p-4">ID</th>
+                                <th class="p-4">Cliente</th>
+                                <th class="p-4">Total</th>
+                                <th class="p-4">Status</th>
+                                <th class="p-4">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersList" class="text-sm">
+                            <tr>
+                                <td colspan="5" class="p-8 text-center text-gray-500">Carregando pedidos...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conteúdo: Produtos -->
+        <div id="tab-produtos" class="tab-content hidden">
+
+            <!-- Lista -->
+            <div id="productsListContainer">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">Gerenciar Produtos</h2>
+                    <button id="newProductBtn" class="btn btn-primary">+ Novo Produto</button>
+                </div>
+                <div id="productsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            </div>
+
+            <!-- Formulário -->
+            <div id="productFormContainer" class="hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold" id="formTitle">Novo Produto</h2>
+                    <button id="cancelProductBtn" class="text-gray-400 hover:text-white">Cancelar</button>
+                </div>
+
+                <form id="productForm" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                    <div class="lg:col-span-2 space-y-6">
+                        <div class="card">
+                            <h3 class="text-lg font-bold mb-4 border-b border-gray-800 pb-2">Informações Básicas</h3>
+                            <label class="block text-sm text-gray-400 mb-1">Título</label>
+                            <input type="text" id="prodTitle" required class="mb-4">
+                            <label class="block text-sm text-gray-400 mb-1">Descrição</label>
+                            <textarea id="prodDesc" rows="4"></textarea>
+                        </div>
+
+                        <div class="card">
+                            <h3 class="text-lg font-bold mb-4 border-b border-gray-800 pb-2">Preços</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div><label class="block text-sm text-gray-400 mb-1">Preço Atual</label><input
+                                        type="number" id="prodPrice" required step="0.01"></div>
+                                <div><label class="block text-sm text-gray-400 mb-1">Preço Antigo</label><input
+                                        type="number" id="prodOldPrice" step="0.01"></div>
+                            </div>
+                            <div><label class="block text-sm text-gray-400 mb-1">Desconto (%)</label><input
+                                    type="number" id="prodDiscount" readonly class="cursor-not-allowed bg-gray-900">
+                            </div>
+                        </div>
+
+                        <!-- SEO e Destaque (NOVA SEÇÃO) -->
+                        <div class="card border border-[#D4AF37]/30">
+                            <h3 class="text-lg font-bold mb-4 border-b border-gray-800 pb-2 text-[#D4AF37]">SEO &
+                                Destaque</h3>
+
+                            <div class="flex gap-6 mb-4">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="isFeatured"
+                                        class="w-4 h-4 rounded border-gray-600 bg-gray-900 text-[#D4AF37]">
+                                    <span class="font-bold text-white">⭐ Produto em Destaque</span>
+                                </label>
+
+                                <div class="flex items-center gap-2">
+                                    <span class="text-sm text-gray-400">Ordem:</span>
+                                    <input type="number" id="featuredOrder" value="0"
+                                        class="w-20 p-1 text-center bg-gray-900 border border-gray-700 rounded">
+                                </div>
+                            </div>
+
+                            <label class="block text-sm text-gray-400 mb-1">Título SEO (Meta Title)</label>
+                            <input type="text" id="seoTitle" placeholder="Ex: Camiseta Oversized Preta | A Fabricah"
+                                class="mb-4">
+
+                            <label class="block text-sm text-gray-400 mb-1">Descrição SEO (Meta Description)</label>
+                            <textarea id="seoDesc" rows="2" placeholder="Breve descrição para o Google..."></textarea>
+                        </div>
+
+                        <div class="card">
+                            <h3 class="text-lg font-bold mb-4 border-b border-gray-800 pb-2">Variações</h3>
+                            <div class="mb-4">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="prodCustom"
+                                        class="w-4 h-4 rounded border-gray-600 bg-gray-900 text-[#D4AF37]">
+                                    <span>Personalizável?</span>
+                                </label>
+                            </div>
+                            <label class="block text-sm text-gray-400 mb-2">Tamanhos</label>
+                            <div class="grid grid-cols-4 gap-2">
+                                <label class="cursor-pointer border p-2 rounded hover:bg-gray-800"><input
+                                        type="checkbox" value="P" class="size-checkbox"> P</label>
+                                <label class="cursor-pointer border p-2 rounded hover:bg-gray-800"><input
+                                        type="checkbox" value="M" class="size-checkbox"> M</label>
+                                <label class="cursor-pointer border p-2 rounded hover:bg-gray-800"><input
+                                        type="checkbox" value="G" class="size-checkbox"> G</label>
+                                <label class="cursor-pointer border p-2 rounded hover:bg-gray-800"><input
+                                        type="checkbox" value="GG" class="size-checkbox"> GG</label>
+                                <label class="cursor-pointer border p-2 rounded hover:bg-gray-800"><input
+                                        type="checkbox" value="XG" class="size-checkbox"> XG</label>
+                                <label class="cursor-pointer border p-2 rounded hover:bg-gray-800"><input
+                                        type="checkbox" value="ESP" class="size-checkbox"> ESP</label>
+                                <label class="cursor-pointer border p-2 rounded hover:bg-gray-800"><input
+                                        type="checkbox" value="Único" class="size-checkbox"> Único</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="card">
+                            <h3 class="text-lg font-bold mb-4 border-b border-gray-800 pb-2">Mídia</h3>
+                            <input type="file" id="prodImage" accept="image/*" class="text-sm">
+                            <div id="imagePreviewContainer" class="mt-4 hidden">
+                                <img id="imagePreview" src="" class="w-full rounded border border-gray-700">
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3 class="text-lg font-bold mb-4 border-b border-gray-800 pb-2">Organização</h3>
+                            <label class="block text-sm text-gray-400 mb-1">Categoria</label>
+                            <select id="prodCategory">
+                                <option value="camisetas">Camisetas</option>
+                                <option value="sublimadas">Sublimadas</option>
+                                <option value="moletons">Moletons</option>
+                                <option value="cria-do-morro">Cria do Morro</option>
+                                <option value="acessorios">Acessórios</option>
+                            </select>
+                        </div>
+
+                        <div class="card bg-gray-900/50 border-gray-700 sticky top-24">
+                            <h3 class="text-lg font-bold mb-4 text-[#D4AF37]">Ações</h3>
+                            <div class="flex flex-col gap-3">
+                                <button type="button" id="previewBtn"
+                                    class="btn border border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black w-full">👁️
+                                    Simular (Preview)</button>
+                                <button type="button" id="saveDraftBtn"
+                                    class="btn border border-gray-600 hover:bg-gray-800 w-full">Salvar Rascunho</button>
+                                <button type="button" id="publishBtn"
+                                    class="btn btn-primary w-full shadow-[0_0_15px_rgba(212,175,55,0.3)]">Publicar
+                                    Agora</button>
+                                <button type="button" id="deleteProductBtn"
+                                    class="btn text-red-500 hover:bg-red-900/20 border-none w-full mt-2 hidden">Excluir</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal de Preview -->
+    <div id="previewModal"
+        class="fixed inset-0 bg-black/90 hidden items-center justify-center z-[100] backdrop-blur p-4">
+        <div
+            class="bg-[#0A0A0A] rounded-2xl w-full max-w-md border border-gray-800 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+            <div class="p-4 border-b border-gray-800 flex justify-between items-center bg-[#111]">
+                <h3 class="text-sm font-bold text-gray-400">PRÉ-VISUALIZAÇÃO (COMO APARECE NA LOJA)</h3>
+                <button id="closePreviewBtn" class="text-white hover:text-red-500">✕</button>
+            </div>
+            <div class="p-8 flex justify-center bg-black" id="previewContent">
+                <!-- Conteúdo injetado via JS -->
+            </div>
+            <div class="p-4 border-t border-gray-800 bg-[#111] text-center text-xs text-gray-500">
+                Esta é apenas uma simulação visual.
+            </div>
+        </div>
+    </div>
+
+    <script>window.PAGE_ID = 'dashboard';</script>
+    <script type="module" src="admin.js"></script>
+</body>
+
+</html>
