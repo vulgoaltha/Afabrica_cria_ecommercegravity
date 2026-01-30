@@ -16,6 +16,7 @@ interface NavLink {
 interface DropdownItem {
     name: string;
     path: string;
+    isNested?: boolean;
 }
 
 const Navigation = () => {
@@ -49,8 +50,8 @@ const Navigation = () => {
     const catalogoDropdownItems: DropdownItem[] = [
         { name: 'Todos Produtos', path: '/catalogo' },
         { name: 'Cria do Morro', path: '/catalogo/cria-do-morro' },
-        { name: 'Aba Reta', path: '/catalogo/aba-reta' },
-        { name: 'Trucker', path: '/catalogo/trucker' },
+        { name: 'Aba Reta', path: '/catalogo/aba-reta', isNested: true },
+        { name: 'Trucker', path: '/catalogo/trucker', isNested: true },
         { name: 'Produtos Personalizados', path: '/catalogo/personalizados' },
     ];
 
@@ -123,7 +124,8 @@ const Navigation = () => {
                                                             to={item.path}
                                                             className={cn(
                                                                 'block px-4 py-3 text-sm transition-colors duration-200',
-                                                                'text-white hover:bg-[var(--color-gold)]/10 hover:text-[var(--color-gold)]',
+                                                                item.isNested ? 'pl-8 text-gray-400 text-xs' : 'text-white',
+                                                                'hover:bg-[var(--color-gold)]/10 hover:text-[var(--color-gold)]',
                                                                 index !== catalogoDropdownItems.length - 1 && 'border-b border-gray-800'
                                                             )}
                                                         >
@@ -241,7 +243,11 @@ const Navigation = () => {
                                                                 <Link
                                                                     key={item.path}
                                                                     to={item.path}
-                                                                    className="block py-2 px-4 rounded-lg text-sm text-white hover:bg-[var(--color-gold)]/10 hover:text-[var(--color-gold)] transition-colors duration-200"
+                                                                    className={cn(
+                                                                        "block py-2 px-4 rounded-lg text-sm transition-colors duration-200",
+                                                                        item.isNested ? "ml-4 border-l border-gray-800 pl-4 text-gray-400" : "text-white",
+                                                                        "hover:bg-[var(--color-gold)]/10 hover:text-[var(--color-gold)]"
+                                                                    )}
                                                                 >
                                                                     {item.name}
                                                                 </Link>
