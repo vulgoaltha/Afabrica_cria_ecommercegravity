@@ -26,7 +26,9 @@ const ProductCatalog = () => {
             setSelectedSubCategory('bones');
         } else if (category === 'trucker') {
             setSelectedSubCategory('bucket');
-        } else if (category !== 'cria-do-morro') {
+        } else if (category === 'vestuario') {
+            setSelectedSubCategory('vestuario');
+        } else if (category === 'cria-do-morro' || !category) {
             setSelectedSubCategory('todos');
         }
     }, [category]);
@@ -56,17 +58,15 @@ const ProductCatalog = () => {
 
         // Filter by category from URL
         if (category) {
-            if (category === 'aba-reta' || category === 'trucker') {
-                filtered = filtered.filter(p => p.category === 'cria-do-morro');
-                const sub = category === 'aba-reta' ? 'bones' : 'bucket';
-                filtered = filtered.filter(p => p.sub_category === sub);
-            } else {
-                filtered = filtered.filter(p => p.category === category);
+            const isCriaSession = ['cria-do-morro', 'aba-reta', 'trucker', 'vestuario'].includes(category);
 
-                // Apply sub-category filter if in cria-do-morro
-                if (category === 'cria-do-morro' && selectedSubCategory !== 'todos') {
+            if (isCriaSession) {
+                filtered = filtered.filter(p => p.category === 'cria-do-morro');
+                if (selectedSubCategory !== 'todos') {
                     filtered = filtered.filter(p => p.sub_category === selectedSubCategory);
                 }
+            } else {
+                filtered = filtered.filter(p => p.category === category);
             }
         }
 
@@ -85,11 +85,12 @@ const ProductCatalog = () => {
         if (!category) return 'Catálogo';
         const titles: Record<string, string> = {
             'cria-do-morro': 'Cria do Morro',
-            'bones': 'Bonés',
-            'bucket': 'Bucket',
+            'vestuario': 'Vestuário',
+            'aba-reta': 'Aba Reta',
+            'trucker': 'Trucker',
             'personalizados': 'Produtos Personalizados'
         };
-        return titles[category] || 'Catálogo';
+        return titles[category] || category.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
     }, [category]);
 
     const handleAddToCart = async (product: Product) => {
@@ -157,27 +158,27 @@ const ProductCatalog = () => {
                                 </div>
                             </div>
 
-                            {/* Sub-category Filter (Only for Cria do Morro) */}
-                            {category === 'cria-do-morro' && (
+                            {/* Sub-category Filter (Visible in all Cria do Morro related aliases) */}
+                            {['cria-do-morro', 'aba-reta', 'trucker', 'vestuario'].includes(category || '') && (
                                 <div className="flex flex-wrap gap-2 pt-2">
                                     {[
-                                        { id: 'todos', label: 'Todos' },
-                                        { id: 'vestuario', label: 'Vestuário' },
-                                        { id: 'bones', label: 'Aba Reta' },
-                                        { id: 'bucket', label: 'Trucker' }
+                                        { id: 'todos', label: 'Todos', path: '/catalogo/cria-do-morro' },
+                                        { id: 'vestuario', label: 'Vestuário', path: '/catalogo/vestuario' },
+                                        { id: 'bones', label: 'Aba Reta', path: '/catalogo/aba-reta' },
+                                        { id: 'bucket', label: 'Trucker', path: '/catalogo/trucker' }
                                     ].map((sub) => (
-                                        <button
+                                        <Link
                                             key={sub.id}
-                                            onClick={() => setSelectedSubCategory(sub.id)}
+                                            to={sub.path}
                                             className={cn(
-                                                "px-6 py-2 rounded-full text-sm font-bold uppercase tracking-wider transition-all duration-300 border-2",
+                                                "px-6 py-2 rounded-full text-sm font-bold uppercase tracking-wider transition-all duration-300 border-2 flex items-center justify-center min-w-[120px]",
                                                 selectedSubCategory === sub.id
                                                     ? "bg-[var(--color-gold)] border-[var(--color-gold)] text-black"
                                                     : "bg-transparent border-gray-800 text-gray-400 hover:border-[var(--color-gold)]/50"
                                             )}
                                         >
                                             {sub.label}
-                                        </button>
+                                        </Link>
                                     ))}
                                 </div>
                             )}
