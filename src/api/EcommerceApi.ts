@@ -87,6 +87,9 @@ export const getProducts = async (): Promise<{ products: Product[] }> => {
             manage_inventory: true,
             created_at: item.created_at,
             subtitle: item.subtitle,
+            sizes: item.sizes,
+            customizable: item.customizable,
+            purchasable: item.purchasable,
             variants: [
                 {
                     id: `var-${item.id}`,
@@ -153,6 +156,9 @@ export const getProduct = async (id: string): Promise<Product> => {
             manage_inventory: true,
             created_at: data.created_at,
             subtitle: data.subtitle,
+            sizes: data.sizes,
+            customizable: data.customizable,
+            purchasable: data.purchasable,
             variants: [
                 {
                     id: `var-${data.id}`,

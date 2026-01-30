@@ -63,16 +63,16 @@ function ProductDetailPage() {
     }, []);
 
     const handlePrevImage = useCallback(() => {
-        if (product?.images?.length > 1) {
+        if (product?.images && product.images.length > 1) {
             setCurrentImageIndex(prev => prev === 0 ? product.images.length - 1 : prev - 1);
         }
-    }, [product?.images?.length]);
+    }, [product?.images]);
 
     const handleNextImage = useCallback(() => {
-        if (product?.images?.length > 1) {
+        if (product?.images && product.images.length > 1) {
             setCurrentImageIndex(prev => prev === product.images.length - 1 ? 0 : prev + 1);
         }
-    }, [product?.images?.length]);
+    }, [product?.images]);
 
     const handleVariantSelect = useCallback((variant: ProductVariant) => {
         setSelectedVariant(variant);
@@ -89,11 +89,10 @@ function ProductDetailPage() {
             try {
                 setLoading(true);
                 setError(null);
-                const fetchedProduct = await getProduct(id);
+                const fetchedProduct = await getProduct(id as string);
 
                 try {
                     const quantitiesResponse = await getProductQuantities({
-                        fields: 'inventory_quantity',
                         product_ids: [fetchedProduct.id]
                     });
 
@@ -246,7 +245,7 @@ function ProductDetailPage() {
                             <div className="mb-8">
                                 <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3">Tamanho</h3>
                                 <div className="flex flex-wrap gap-3">
-                                    {(product.sizes && product.sizes.length > 0 ? product.sizes : ['P', 'M', 'G', 'GG']).map((size) => (
+                                    {(product.sizes && product.sizes.length > 0 ? product.sizes : ['P', 'M', 'G', 'GG', 'EXG', 'ESP', 'ESP1', 'ESP2']).map((size: string) => (
                                         <button
                                             key={size}
                                             onClick={() => setSelectedSize(size)}

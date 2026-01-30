@@ -15,6 +15,9 @@ export interface Product {
     variants?: ProductVariant[];
     created_at: string;
     subtitle?: string;
+    sizes?: string[];
+    customizable?: boolean;
+    purchasable?: boolean;
 }
 
 export interface ProductVariant {
