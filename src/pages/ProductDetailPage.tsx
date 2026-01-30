@@ -155,7 +155,6 @@ function ProductDetailPage() {
     const originalPrice = priceInfo.displayOldPrice;
     const availableStock = selectedVariant ? selectedVariant.stock_quantity : 0;
     const isStockManaged = selectedVariant?.manage_inventory ?? false;
-    // @ts-ignore - purchasable doesn't exist on Product type yet
     const canAddToCart = !isStockManaged || quantity <= availableStock;
 
     const currentImage = product.images[currentImageIndex];
@@ -264,7 +263,6 @@ function ProductDetailPage() {
                             </div>
 
                             {/* Customization (If applicable) */}
-                            {/* @ts-ignore */}
                             {product.customizable && (
                                 <div className="mb-8 p-4 bg-gray-900/50 rounded-xl border border-gray-800">
                                     <h3 className="text-sm font-bold text-white mb-2">Personalização</h3>
@@ -293,7 +291,6 @@ function ProductDetailPage() {
                                     onClick={handleAddToCart}
                                     size="lg"
                                     className="flex-1 bg-dourado hover:bg-yellow-500 text-preto font-bold text-lg h-auto py-4 rounded-xl shadow-lg shadow-dourado/10 transition-all hover:scale-[1.02]"
-                                    // @ts-ignore
                                     disabled={!canAddToCart || (product.purchasable === false)}
                                 >
                                     <ShoppingCart className="mr-2 h-6 w-6" />
@@ -313,7 +310,6 @@ function ProductDetailPage() {
                                 </p>
                             )}
 
-                            {/* @ts-ignore */}
                             {product.purchasable === false && (
                                 <p className="text-red-400 flex items-center gap-2 font-medium bg-red-900/20 py-2 px-4 rounded-lg w-max border border-red-900/50">
                                     <XCircle size={18} /> Indisponível no momento

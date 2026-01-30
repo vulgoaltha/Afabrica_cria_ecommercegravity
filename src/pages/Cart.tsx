@@ -116,6 +116,16 @@ const Cart = () => {
                                                     <Badge variant="secondary">
                                                         {item.variant.title}
                                                     </Badge>
+                                                    {(item.variant as any).size && (
+                                                        <Badge variant="outline" className="border-dourado/50 text-dourado">
+                                                            Tam: {(item.variant as any).size}
+                                                        </Badge>
+                                                    )}
+                                                    {(item.variant as any).customization && (
+                                                        <Badge variant="outline" className="border-blue-500/50 text-blue-400">
+                                                            Pers: {(item.variant as any).customization}
+                                                        </Badge>
+                                                    )}
                                                 </div>
                                             </div>
 

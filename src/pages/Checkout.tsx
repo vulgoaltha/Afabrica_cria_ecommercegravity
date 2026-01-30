@@ -459,7 +459,7 @@ const Checkout = () => {
                                             <div className="flex-1">
                                                 <p className="font-bold text-xs uppercase line-clamp-1">{item.product.title}</p>
                                                 <p className="text-gray-400 text-[10px] uppercase">
-                                                    {item.variant.title} x {item.quantity}
+                                                    {item.variant.title} {(item.variant as any).size ? `(${(item.variant as any).size})` : ''} x {item.quantity}
                                                 </p>
                                                 <p className="text-[var(--color-gold)] text-xs font-bold mt-1">
                                                     {calculateProductPrices(item.product, item.variant).displayPrice}

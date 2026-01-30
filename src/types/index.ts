@@ -18,6 +18,7 @@ export interface Product {
     sizes?: string[];
     customizable?: boolean;
     purchasable?: boolean;
+    sub_category?: string;
 }
 
 export interface ProductVariant {

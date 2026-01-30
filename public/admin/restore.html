@@ -65,13 +65,16 @@
                 const categories = ['cria-do-morro', 'bones', 'bucket', 'personalizados'];
                 for (let i = 1; i <= 160; i++) {
                     const category = categories[Math.floor((i - 1) / 40)];
+                    const isCria = category === 'cria-do-morro';
                     randomProducts.push({
                         title: `${category.replace(/-/g, ' ').toUpperCase()} #${i}`,
                         description: "Descrição automática para este produto exclusivo.",
                         price_in_cents: Math.floor(Math.random() * 20000) + 5000,
                         image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800&q=80",
                         category: category,
-                        sizes: ['P', 'M', 'G', 'GG', 'EXG', 'ESP', 'ESP1', 'ESP2'],
+                        sizes: isCria ? ['U'] : ['P', 'M', 'G', 'GG', 'EXG', 'ESP', 'ESP1', 'ESP2'],
+                        customizable: !isCria,
+                        subtitle: isCria ? 'Tamanho Único' : 'Lançamento 2024',
                         stock: 100
                     });
                 }

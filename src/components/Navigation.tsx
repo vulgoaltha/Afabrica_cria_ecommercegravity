@@ -49,8 +49,6 @@ const Navigation = () => {
     const catalogoDropdownItems: DropdownItem[] = [
         { name: 'Todos Produtos', path: '/catalogo' },
         { name: 'Cria do Morro', path: '/catalogo/cria-do-morro' },
-        { name: 'Bonés', path: '/catalogo/bones' },
-        { name: 'Bucket', path: '/catalogo/bucket' },
         { name: 'Produtos Personalizados', path: '/catalogo/personalizados' },
     ];
 

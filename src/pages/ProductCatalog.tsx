@@ -8,12 +8,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/hooks/useCart';
 import { useToast } from '@/components/ui/use-toast';
+import { cn } from '@/lib/utils';
 import { getProducts, calculateProductPrices } from '@/api/EcommerceApi';
 import { Product } from '@/types';
 
 const ProductCatalog = () => {
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedSubCategory, setSelectedSubCategory] = useState<string>('todos');
     const [searchTerm, setSearchTerm] = useState('');
     const { category } = useParams();
     const { addToCart } = useCart();
@@ -45,6 +47,11 @@ const ProductCatalog = () => {
         // Filter by category from URL
         if (category) {
             filtered = filtered.filter(p => p.category === category);
+
+            // Apply sub-category filter if in cria-do-morro
+            if (category === 'cria-do-morro' && selectedSubCategory !== 'todos') {
+                filtered = filtered.filter(p => p.sub_category === selectedSubCategory);
+            }
         }
 
         // Filter by search term
@@ -130,6 +137,31 @@ const ProductCatalog = () => {
                                     />
                                 </div>
                             </div>
+
+                            {/* Sub-category Filter (Only for Cria do Morro) */}
+                            {category === 'cria-do-morro' && (
+                                <div className="flex flex-wrap gap-2 pt-2">
+                                    {[
+                                        { id: 'todos', label: 'Todos' },
+                                        { id: 'vestuario', label: 'Vestuário' },
+                                        { id: 'bones', label: 'Aba Reta' },
+                                        { id: 'bucket', label: 'Trucker' }
+                                    ].map((sub) => (
+                                        <button
+                                            key={sub.id}
+                                            onClick={() => setSelectedSubCategory(sub.id)}
+                                            className={cn(
+                                                "px-6 py-2 rounded-full text-sm font-bold uppercase tracking-wider transition-all duration-300 border-2",
+                                                selectedSubCategory === sub.id
+                                                    ? "bg-[var(--color-gold)] border-[var(--color-gold)] text-black"
+                                                    : "bg-transparent border-gray-800 text-gray-400 hover:border-[var(--color-gold)]/50"
+                                            )}
+                                        >
+                                            {sub.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
 
                             <p className="text-gray-400">
                                 {filteredProducts.length} {filteredProducts.length === 1 ? 'produto encontrado' : 'produtos encontrados'}

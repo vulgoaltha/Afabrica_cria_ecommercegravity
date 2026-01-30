@@ -90,6 +90,7 @@ export const getProducts = async (): Promise<{ products: Product[] }> => {
             sizes: item.sizes,
             customizable: item.customizable,
             purchasable: item.purchasable,
+            sub_category: item.sub_category,
             variants: [
                 {
                     id: `var-${item.id}`,
@@ -159,6 +160,7 @@ export const getProduct = async (id: string): Promise<Product> => {
             sizes: data.sizes,
             customizable: data.customizable,
             purchasable: data.purchasable,
+            sub_category: data.sub_category,
             variants: [
                 {
                     id: `var-${data.id}`,
