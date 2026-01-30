@@ -25,13 +25,38 @@ const ProductCard = ({ product, index }) => {
 
     const displayVariant = useMemo(() => (product.variants && product.variants.length > 0) ? product.variants[0] : {}, [product]);
 
-    // Support new direct fields and fallback to variants/cents
-    const precoAtualValue = product.preco_atual !== undefined ? product.preco_atual : (displayVariant.sale_price_in_cents ? displayVariant.sale_price_in_cents / 100 : (displayVariant.price_in_cents ? displayVariant.price_in_cents / 100 : 0));
-    const precoAntigoValue = product.preco_antigo !== undefined ? product.preco_antigo : (displayVariant.sale_price_in_cents ? displayVariant.price_in_cents / 100 : null);
+    // Determine current and old prices with priority: direct fields > variant sale > variant regular
+    const precoAtualValue = useMemo(() => {
+        // Priority 1: Direct preco_atual field
+        if (product.preco_atual !== undefined) {
+            return product.preco_atual;
+        }
+        // Priority 2: Variant sale price (in cents)
+        if (displayVariant.sale_price_in_cents) {
+            return displayVariant.sale_price_in_cents / 100;
+        }
+        // Priority 3: Variant regular price (in cents)
+        if (displayVariant.price_in_cents) {
+            return displayVariant.price_in_cents / 100;
+        }
+        return 0;
+    }, [product.preco_atual, displayVariant]);
+
+    const precoAntigoValue = useMemo(() => {
+        // Priority 1: Direct preco_antigo field
+        if (product.preco_antigo !== undefined) {
+            return product.preco_antigo;
+        }
+        // Priority 2: If there's a sale price, show regular price as old price
+        if (displayVariant.sale_price_in_cents && displayVariant.price_in_cents) {
+            return displayVariant.price_in_cents / 100;
+        }
+        return null;
+    }, [product.preco_antigo, displayVariant]);
 
     const displayPriceAtual = useMemo(() => formatPrice(precoAtualValue), [precoAtualValue]);
     const displayPriceAntigo = useMemo(() => formatPrice(precoAntigoValue), [precoAntigoValue]);
-    const hasDiscount = !!displayPriceAntigo && precoAntigoValue > precoAtualValue;
+    const hasDiscount = !!precoAntigoValue && precoAntigoValue > precoAtualValue;
 
     const discountPercentage = useMemo(() => {
         if (precoAntigoValue && precoAtualValue && precoAntigoValue > precoAtualValue) {
@@ -39,6 +64,17 @@ const ProductCard = ({ product, index }) => {
         }
         return null;
     }, [precoAntigoValue, precoAtualValue]);
+
+    // Debug logging (temporary)
+    console.log('Product:', product.title, {
+        preco_atual: product.preco_atual,
+        preco_antigo: product.preco_antigo,
+        precoAtualValue,
+        precoAntigoValue,
+        hasDiscount,
+        discountPercentage,
+        variant: displayVariant
+    });
 
     const handleAddToCart = useCallback(async (e) => {
         e.preventDefault();
