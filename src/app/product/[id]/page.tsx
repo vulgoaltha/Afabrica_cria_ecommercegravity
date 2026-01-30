@@ -11,12 +11,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
     if (!product) {
         return {
-            title: 'Produto não encontrado | A Fabrica Cria',
+            title: 'Produto não encontrado | A Fabricah Cria',
         };
     }
 
     return {
-        title: `${product.title} - A Fabrica Cria`,
+        title: `${product.title} - A Fabricah Cria`,
         description: product.description?.substring(0, 160) || product.title,
         openGraph: {
             title: product.title,

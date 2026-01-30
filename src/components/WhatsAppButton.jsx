@@ -8,7 +8,7 @@ const WhatsAppButton = () => {
     // Configure seu número de WhatsApp aqui (formato: código do país + DDD + número)
     // Exemplo: 5511999999999 (55 = Brasil, 11 = DDD, 999999999 = número)
     const phoneNumber = '5511999999999'; // ALTERE ESTE NÚMERO
-    const message = 'Olá! Vim do site A Fabrica Cria e gostaria de mais informações.';
+    const message = 'Olá! Vim do site A Fabricah Cria e gostaria de mais informações.';
 
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
 

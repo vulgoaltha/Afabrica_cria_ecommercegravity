@@ -92,7 +92,7 @@ const ProductCard = ({ product, index }) => {
     );
 };
 
-const ProductsList = () => {
+const ProductsList = ({ limit }) => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -170,9 +170,11 @@ const ProductsList = () => {
         );
     }
 
+    const displayedProducts = limit ? products.slice(0, limit) : products;
+
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {products.map((product, index) => (
+            {displayedProducts.map((product, index) => (
                 <ProductCard key={product.id} product={product} index={index} />
             ))}
         </div>

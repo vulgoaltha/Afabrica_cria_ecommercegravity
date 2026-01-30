@@ -22,7 +22,7 @@ const Cart = () => {
         return (
             <>
                 <Helmet>
-                    <title>Carrinho - A Fabrica Cria</title>
+                    <title>Carrinho - A Fabricah Cria</title>
                 </Helmet>
 
                 <div className="min-h-screen bg-preto pt-24 pb-16 flex items-center justify-center">
@@ -54,7 +54,7 @@ const Cart = () => {
     return (
         <>
             <Helmet>
-                <title>Carrinho ({cartItems.length}) - A Fabrica Cria</title>
+                <title>Carrinho ({cartItems.length}) - A Fabricah Cria</title>
             </Helmet>
 
             <div className="min-h-screen bg-preto pt-24 pb-16">

@@ -15,6 +15,7 @@ const Navigation = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
     const [isCartOpen, setIsCartOpen] = useState(false);
+    const [isCatalogoDropdownOpen, setIsCatalogoDropdownOpen] = useState(false);
     const { cartItems } = useCart();
     const pathname = usePathname();
 
@@ -33,9 +34,17 @@ const Navigation = () => {
 
     const navLinks = [
         { name: 'Home', path: '/' },
-        { name: 'Catálogo', path: '/catalogo' },
+        { name: 'Catálogo', path: '/catalogo', hasDropdown: true },
         { name: 'Sobre', path: '/sobre' },
         { name: 'Contato', path: '/contato' },
+    ];
+
+    const catalogoDropdownItems = [
+        { name: 'Todos Produtos', path: '/catalogo' },
+        { name: 'Cria do Morro', path: '/catalogo?categoria=cria-do-morro' },
+        { name: 'Bonés', path: '/catalogo?categoria=bones' },
+        { name: 'Bucket', path: '/catalogo?categoria=bucket' },
+        { name: 'Produtos Personalizados', path: '/catalogo?categoria=personalizados' },
     ];
 
     const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
@@ -72,24 +81,78 @@ const Navigation = () => {
                         {/* Desktop Navigation */}
                         <div className="hidden md:flex items-center space-x-8">
                             {navLinks.map((link) => (
-                                <Link
-                                    key={link.path}
-                                    href={link.path}
-                                    className={cn(
-                                        'text-sm font-medium transition-colors duration-300 relative group',
-                                        pathname === link.path
-                                            ? 'text-[var(--color-gold)]'
-                                            : 'text-white hover:text-[var(--color-gold)]'
-                                    )}
-                                >
-                                    {link.name}
-                                    <span
+                                link.hasDropdown ? (
+                                    <div
+                                        key={link.path}
+                                        className="relative"
+                                        onMouseEnter={() => setIsCatalogoDropdownOpen(true)}
+                                        onMouseLeave={() => setIsCatalogoDropdownOpen(false)}
+                                    >
+                                        <Link
+                                            href={link.path}
+                                            className={cn(
+                                                'text-sm font-medium transition-colors duration-300 relative group',
+                                                pathname === link.path || pathname.startsWith('/catalogo')
+                                                    ? 'text-[var(--color-gold)]'
+                                                    : 'text-white hover:text-[var(--color-gold)]'
+                                            )}
+                                        >
+                                            {link.name}
+                                            <span
+                                                className={cn(
+                                                    'absolute -bottom-1 left-0 h-0.5 bg-[var(--color-gold)] transition-all duration-300',
+                                                    pathname.startsWith('/catalogo') ? 'w-full' : 'w-0 group-hover:w-full'
+                                                )}
+                                            />
+                                        </Link>
+
+                                        {/* Desktop Dropdown */}
+                                        <AnimatePresence>
+                                            {isCatalogoDropdownOpen && (
+                                                <motion.div
+                                                    initial={{ opacity: 0, y: -10 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    exit={{ opacity: 0, y: -10 }}
+                                                    transition={{ duration: 0.2 }}
+                                                    className="absolute top-full left-0 mt-2 w-56 bg-black/95 backdrop-blur-md border border-[var(--color-gold)]/20 rounded-lg shadow-xl overflow-hidden"
+                                                >
+                                                    {catalogoDropdownItems.map((item, index) => (
+                                                        <Link
+                                                            key={item.path}
+                                                            href={item.path}
+                                                            className={cn(
+                                                                'block px-4 py-3 text-sm transition-colors duration-200',
+                                                                'text-white hover:bg-[var(--color-gold)]/10 hover:text-[var(--color-gold)]',
+                                                                index !== catalogoDropdownItems.length - 1 && 'border-b border-gray-800'
+                                                            )}
+                                                        >
+                                                            {item.name}
+                                                        </Link>
+                                                    ))}
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </div>
+                                ) : (
+                                    <Link
+                                        key={link.path}
+                                        href={link.path}
                                         className={cn(
-                                            'absolute -bottom-1 left-0 h-0.5 bg-[var(--color-gold)] transition-all duration-300',
-                                            pathname === link.path ? 'w-full' : 'w-0 group-hover:w-full'
+                                            'text-sm font-medium transition-colors duration-300 relative group',
+                                            pathname === link.path
+                                                ? 'text-[var(--color-gold)]'
+                                                : 'text-white hover:text-[var(--color-gold)]'
                                         )}
-                                    />
-                                </Link>
+                                    >
+                                        {link.name}
+                                        <span
+                                            className={cn(
+                                                'absolute -bottom-1 left-0 h-0.5 bg-[var(--color-gold)] transition-all duration-300',
+                                                pathname === link.path ? 'w-full' : 'w-0 group-hover:w-full'
+                                            )}
+                                        />
+                                    </Link>
+                                )
                             ))}
                         </div>
 
@@ -143,18 +206,63 @@ const Navigation = () => {
                             >
                                 <div className="py-6 px-4 space-y-4">
                                     {navLinks.map((link) => (
-                                        <Link
-                                            key={link.path}
-                                            href={link.path}
-                                            className={cn(
-                                                'block py-3 px-4 rounded-lg transition-colors duration-300 text-lg',
-                                                pathname === link.path
-                                                    ? 'bg-[var(--color-gold)]/20 text-[var(--color-gold)]'
-                                                    : 'text-white hover:bg-[var(--color-gold)]/10 hover:text-[var(--color-gold)]'
-                                            )}
-                                        >
-                                            {link.name}
-                                        </Link>
+                                        link.hasDropdown ? (
+                                            <div key={link.path}>
+                                                <button
+                                                    onClick={() => setIsCatalogoDropdownOpen(!isCatalogoDropdownOpen)}
+                                                    className={cn(
+                                                        'w-full text-left py-3 px-4 rounded-lg transition-colors duration-300 text-lg flex items-center justify-between',
+                                                        pathname.startsWith('/catalogo')
+                                                            ? 'bg-[var(--color-gold)]/20 text-[var(--color-gold)]'
+                                                            : 'text-white hover:bg-[var(--color-gold)]/10 hover:text-[var(--color-gold)]'
+                                                    )}
+                                                >
+                                                    {link.name}
+                                                    <motion.span
+                                                        animate={{ rotate: isCatalogoDropdownOpen ? 180 : 0 }}
+                                                        transition={{ duration: 0.2 }}
+                                                    >
+                                                        ▼
+                                                    </motion.span>
+                                                </button>
+
+                                                {/* Mobile Dropdown Items */}
+                                                <AnimatePresence>
+                                                    {isCatalogoDropdownOpen && (
+                                                        <motion.div
+                                                            initial={{ opacity: 0, height: 0 }}
+                                                            animate={{ opacity: 1, height: 'auto' }}
+                                                            exit={{ opacity: 0, height: 0 }}
+                                                            transition={{ duration: 0.2 }}
+                                                            className="overflow-hidden mt-2 ml-4 space-y-2"
+                                                        >
+                                                            {catalogoDropdownItems.map((item) => (
+                                                                <Link
+                                                                    key={item.path}
+                                                                    href={item.path}
+                                                                    className="block py-2 px-4 rounded-lg text-sm text-white hover:bg-[var(--color-gold)]/10 hover:text-[var(--color-gold)] transition-colors duration-200"
+                                                                >
+                                                                    {item.name}
+                                                                </Link>
+                                                            ))}
+                                                        </motion.div>
+                                                    )}
+                                                </AnimatePresence>
+                                            </div>
+                                        ) : (
+                                            <Link
+                                                key={link.path}
+                                                href={link.path}
+                                                className={cn(
+                                                    'block py-3 px-4 rounded-lg transition-colors duration-300 text-lg',
+                                                    pathname === link.path
+                                                        ? 'bg-[var(--color-gold)]/20 text-[var(--color-gold)]'
+                                                        : 'text-white hover:bg-[var(--color-gold)]/10 hover:text-[var(--color-gold)]'
+                                                )}
+                                            >
+                                                {link.name}
+                                            </Link>
+                                        )
                                     ))}
                                 </div>
                             </motion.div>

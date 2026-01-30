@@ -50,7 +50,7 @@ const Footer = () => {
                         <Link to="/" className="inline-block">
                             <motion.img
                                 src={logo}
-                                alt="A Fábrica Cria Logo"
+                                alt="A Fabricah Cria Logo"
                                 className="h-10 w-auto object-contain"
                                 whileHover={{ scale: 1.05 }}
                                 transition={{ duration: 0.2 }}
@@ -159,7 +159,7 @@ const Footer = () => {
                 {/* Copyright */}
                 <div className="pt-8 border-t border-gray-900">
                     <p className="text-center text-gray-500 text-xs font-bold uppercase tracking-widest">
-                        © {new Date().getFullYear()} A Fabrica Cria. Todos os direitos reservados.
+                        © {new Date().getFullYear()} A Fabricah Cria. Todos os direitos reservados.
                     </p>
                 </div>
             </div>

@@ -239,7 +239,7 @@ const Checkout = () => {
     return (
         <>
             <Helmet>
-                <title>Finalizar Compra - A Fabrica Cria</title>
+                <title>Finalizar Compra - A Fabricah Cria</title>
             </Helmet>
 
             <div className="min-h-screen bg-black pt-24 pb-16 text-white">

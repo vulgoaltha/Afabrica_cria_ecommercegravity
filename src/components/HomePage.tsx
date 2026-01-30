@@ -55,7 +55,7 @@ const HomePage = () => {
                             transition={{ duration: 0.8, delay: 0.2 }}
                             className="text-4xl sm:text-5xl md:text-7xl font-bold leading-tight md:leading-tight"
                         >
-                            <span className="text-[var(--color-gold)] block mb-2 md:mb-4 uppercase tracking-tighter">A Fabrica Cria</span>
+                            <span className="text-[var(--color-gold)] block mb-2 md:mb-4 uppercase tracking-tighter">A Fabricah Cria</span>
                             <span className="text-white uppercase tracking-tighter">Uniformes Exclusivos</span>
                         </motion.h1>
 
@@ -109,7 +109,7 @@ const HomePage = () => {
                         className="text-center mb-16"
                     >
                         <h2 className="text-3xl md:text-5xl font-bold mb-4 uppercase tracking-tighter">
-                            Por que escolher <span className="text-[var(--color-gold)]">A Fabrica Cria</span>?
+                            Por que escolher <span className="text-[var(--color-gold)]">A Fabricah Cria</span>?
                         </h2>
                         <p className="text-gray-400 text-lg max-w-2xl mx-auto">
                             Excelência em cada detalhe, do design à entrega

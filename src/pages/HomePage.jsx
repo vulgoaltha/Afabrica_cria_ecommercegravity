@@ -28,12 +28,12 @@ const HomePage = () => {
     return (
         <>
             <Helmet>
-                <title>A Fabrica Cria - Uniformes Personalizados</title>
+                <title>A Fabricah Cria - Uniformes Personalizados</title>
                 <meta
                     name="description"
                     content="Uniformes exclusivos de alta qualidade para equipes, empresas e eventos."
                 />
-                <meta property="og:title" content="A Fabrica Cria - Uniformes Personalizados" />
+                <meta property="og:title" content="A Fabricah Cria - Uniformes Personalizados" />
                 <meta
                     property="og:description"
                     content="Uniformes personalizados de alta qualidade para equipes, empresas e eventos."
@@ -67,7 +67,7 @@ const HomePage = () => {
                             transition={{ duration: 0.8, delay: 0.2 }}
                             className="font-poppins text-4xl sm:text-5xl md:text-7xl font-bold leading-tight md:leading-tight"
                         >
-                            <span className="text-gradient block mb-2 md:mb-4">A Fabrica Cria</span>
+                            <span className="text-gradient block mb-2 md:mb-4">A Fabricah Cria</span>
                             <span className="text-white">Uniformes Exclusivos</span>
                         </motion.h1>
 
@@ -123,7 +123,7 @@ const HomePage = () => {
                         className="text-center mb-16"
                     >
                         <h2 className="font-poppins text-3xl md:text-5xl font-bold mb-4">
-                            Por que escolher <span className="text-gradient">A Fabrica Cria</span>?
+                            Por que escolher <span className="text-gradient">A Fabricah Cria</span>?
                         </h2>
                         <p className="text-gray-400 text-lg max-w-2xl mx-auto">
                             Excelência em cada detalhe, do design à entrega
@@ -162,14 +162,14 @@ const HomePage = () => {
                         className="text-center mb-16"
                     >
                         <h2 className="font-poppins text-3xl md:text-5xl font-bold mb-4">
-                            Produtos em <span className="text-gradient">Destaque</span>
+                            Os <span className="text-gradient">Mais Vendidos</span>
                         </h2>
                         <p className="text-gray-400 text-lg max-w-2xl mx-auto">
                             Descubra nossos uniformes mais populares e exclusivos
                         </p>
                     </motion.div>
 
-                    <ProductsList />
+                    <ProductsList limit={20} />
 
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}

@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Award, Target, Users, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import logo from '@/assets/logo cria do morro.png';
 
 const About = () => {
     const values = [
@@ -41,10 +42,10 @@ const About = () => {
     return (
         <>
             <Helmet>
-                <title>Sobre Nós - A Fabrica Cria</title>
+                <title>Sobre Nós - A Fabricah Cria</title>
                 <meta
                     name="description"
-                    content="Conheça a história da A Fabrica Cria. Especialistas em uniformes personalizados com mais de 10 anos de experiência."
+                    content="Conheça a história da A Fabricah Cria. Especialistas em uniformes personalizados com mais de 10 anos de experiência."
                 />
             </Helmet>
 
@@ -66,9 +67,18 @@ const About = () => {
                         transition={{ duration: 0.8 }}
                         className="max-w-4xl mx-auto space-y-6"
                     >
-                        <h1 className="font-poppins text-5xl md:text-7xl font-bold leading-tight">
-                            Sobre <span className="text-gradient">A Fabrica Cria</span>
-                        </h1>
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.8 }}
+                            className="flex justify-center mb-12 pt-32 md:pt-40"
+                        >
+                            <img
+                                src={logo}
+                                alt="Cria do Morro Logo"
+                                className="h-24 md:h-32 w-auto object-contain mx-auto"
+                            />
+                        </motion.div>
                         <p className="text-xl md:text-2xl text-gray-300">
                             Transformando ideias em uniformes excepcionais há mais de uma década.
                         </p>
@@ -89,7 +99,7 @@ const About = () => {
                         >
                             <p>
                                 Fundada com a missão de elevar o padrão de uniformes personalizados no Brasil,
-                                <span className="text-dourado font-semibold"> A Fabrica Cria </span>
+                                <span className="text-dourado font-semibold"> A Fabricah Cria </span>
                                 nasceu da paixão por qualidade, design e atendimento excepcional.
                             </p>
                             <p>

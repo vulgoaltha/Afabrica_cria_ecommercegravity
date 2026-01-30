@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Helmet } from 'react-helmet';
-import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Link, useParams } from 'react-router-dom';
 import { Search, ShoppingCart, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ const ProductCatalog = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const { category } = useParams();
     const { addToCart } = useCart();
     const { toast } = useToast();
 
@@ -38,11 +39,34 @@ const ProductCatalog = () => {
     }, [toast]);
 
     const filteredProducts = useMemo(() => {
-        return products.filter((product) => {
-            return product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase()));
-        });
-    }, [searchTerm, products]);
+        let filtered = products;
+
+        // Filter by category from URL
+        if (category) {
+            filtered = filtered.filter(p => p.category === category);
+        }
+
+        // Filter by search term
+        if (searchTerm) {
+            filtered = filtered.filter(product =>
+                product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase()))
+            );
+        }
+
+        return filtered;
+    }, [searchTerm, products, category]);
+
+    const categoryTitle = useMemo(() => {
+        if (!category) return 'Catálogo';
+        const titles = {
+            'cria-do-morro': 'Cria do Morro',
+            'bones': 'Bonés',
+            'bucket': 'Bucket',
+            'personalizados': 'Produtos Personalizados'
+        };
+        return titles[category] || 'Catálogo';
+    }, [category]);
 
     const handleAddToCart = async (product) => {
         if (!product.variants || product.variants.length === 0) return;
@@ -66,7 +90,7 @@ const ProductCatalog = () => {
     return (
         <>
             <Helmet>
-                <title>Catálogo de Produtos - A Fabrica Cria</title>
+                <title>Catálogo de Produtos - A Fabricah Cria</title>
                 <meta
                     name="description"
                     content="Explore nosso catálogo completo de uniformes de alta qualidade. Camisetas, calções, meias, bonés e muito mais."
@@ -83,10 +107,10 @@ const ProductCatalog = () => {
                         className="mb-12 text-center"
                     >
                         <h1 className="font-poppins text-4xl md:text-5xl font-bold mb-4">
-                            Nosso <span className="text-gradient">Catálogo</span>
+                            {category ? <>Nossos <span className="text-gradient">{categoryTitle}</span></> : <>Nosso <span className="text-gradient">Catálogo</span></>}
                         </h1>
                         <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-                            Encontre o uniforme perfeito para sua equipe ou empresa
+                            {category ? `Explorando itens da categoria ${categoryTitle}` : 'Encontre o uniforme perfeito para sua equipe ou empresa'}
                         </p>
                     </motion.div>
 

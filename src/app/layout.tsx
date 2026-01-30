@@ -15,10 +15,10 @@ const poppins = Poppins({
 })
 
 export const metadata: Metadata = {
-    title: 'A Fabrica Cria | Ecommerce Premium',
+    title: 'A Fabricah Cria | Ecommerce Premium',
     description: 'A maior fabrica de criatividade para o seu e-commerce. Produtos premium e exclusivos.',
     openGraph: {
-        title: 'A Fabrica Cria',
+        title: 'A Fabricah Cria',
         description: 'A maior fabrica de criatividade para o seu e-commerce.',
         images: ['/og-image.jpg'],
     },

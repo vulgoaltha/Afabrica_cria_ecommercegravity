@@ -12,7 +12,7 @@ const SuccessPage = () => {
     return (
         <>
             <Helmet>
-                <title>Pedido Confirmado - A Fabrica Cria</title>
+                <title>Pedido Confirmado - A Fabricah Cria</title>
             </Helmet>
 
             <div className="min-h-screen bg-black pt-24 flex items-center justify-center p-4">

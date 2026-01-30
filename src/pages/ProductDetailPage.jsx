@@ -164,7 +164,7 @@ function ProductDetailPage() {
     return (
         <>
             <Helmet>
-                <title>{product.title} - A Fabrica Cria</title>
+                <title>{product.title} - A Fabricah Cria</title>
                 <meta name="description" content={product.description?.substring(0, 160) || product.title} />
             </Helmet>
 

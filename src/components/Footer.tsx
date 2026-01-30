@@ -57,7 +57,7 @@ const Footer = () => {
                             >
                                 <Image
                                     src={logo}
-                                    alt="A Fábrica Cria Logo"
+                                    alt="A Fabricah Cria Logo"
                                     width={120}
                                     height={40}
                                     className="h-10 w-auto object-contain"
@@ -167,7 +167,7 @@ const Footer = () => {
                 {/* Copyright */}
                 <div className="pt-8 border-t border-gray-900">
                     <p className="text-center text-gray-500 text-xs font-bold uppercase tracking-widest">
-                        © {new Date().getFullYear()} A Fabrica Cria. Todos os direitos reservados.
+                        © {new Date().getFullYear()} A Fabricah Cria. Todos os direitos reservados.
                     </p>
                 </div>
             </div>

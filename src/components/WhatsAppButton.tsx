@@ -8,7 +8,7 @@ const WhatsAppButton = () => {
     const [showTooltip, setShowTooltip] = useState(true);
 
     const phoneNumber = '551125067087';
-    const message = 'Olá! Vim do site A Fabrica Cria e gostaria de mais informações.';
+    const message = 'Olá! Vim do site A Fabricah Cria e gostaria de mais informações.';
 
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
 
