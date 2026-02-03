@@ -178,3 +178,24 @@ export const getProduct = async (id: string): Promise<Product> => {
         throw error;
     }
 };
+
+export interface Category {
+    id: string;
+    title: string;
+    slug: string;
+}
+
+export const getCategories = async (): Promise<Category[]> => {
+    try {
+        const { data, error } = await supabase
+            .from('categories')
+            .select('*')
+            .order('title', { ascending: true });
+
+        if (error) throw error;
+        return data as Category[];
+    } catch (error) {
+        console.error("Error fetching categories:", error);
+        return [];
+    }
+};

@@ -6,6 +6,7 @@ import { useCart } from '@/hooks/useCart';
 import { cn } from '@/lib/utils';
 import ShoppingCartComponent from '@/components/ShoppingCart';
 import logo from '@/assets/logo.webp';
+import { getCategories } from '@/api/EcommerceApi';
 
 interface NavLink {
     name: string;
@@ -25,6 +26,22 @@ const Navigation = () => {
     const [isCatalogoDropdownOpen, setIsCatalogoDropdownOpen] = useState(false);
     const { cartItems } = useCart();
     const location = useLocation();
+    const [categories, setCategories] = useState<{ name: string, path: string }[]>([]);
+
+    useEffect(() => {
+        const loadCategories = async () => {
+            const cats = await getCategories();
+            // Default items
+            const items: { name: string, path: string }[] = [];
+
+            cats.forEach(c => {
+                items.push({ name: c.title, path: `/catalogo/${c.slug}` });
+            });
+
+            setCategories(items);
+        };
+        loadCategories();
+    }, []);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -46,11 +63,7 @@ const Navigation = () => {
         { name: 'Contato', path: '/contato' },
     ];
 
-    const catalogoDropdownItems: DropdownItem[] = [
-        { name: 'Todos Produtos', path: '/catalogo' },
-        { name: 'Cria do Morro', path: '/catalogo/cria-do-morro' },
-        { name: 'Produtos Personalizados', path: '/catalogo/personalizados' },
-    ];
+    const catalogoDropdownItems = categories;
 
     const cartCount = cartItems.reduce((sum: number, item: any) => sum + item.quantity, 0);
 

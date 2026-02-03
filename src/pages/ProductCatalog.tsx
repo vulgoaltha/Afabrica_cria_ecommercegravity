@@ -9,23 +9,17 @@ import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/hooks/useCart';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
-import { getProducts, calculateProductPrices } from '@/api/EcommerceApi';
+import { getProducts, calculateProductPrices, getCategories } from '@/api/EcommerceApi';
 import { Product } from '@/types';
 
 const ProductCatalog = () => {
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
-    const [selectedSubCategory, setSelectedSubCategory] = useState<string>('todos');
     const [searchTerm, setSearchTerm] = useState('');
+    const [categoryTitleMap, setCategoryTitleMap] = useState<Record<string, string>>({});
     const { toast } = useToast();
     const { category } = useParams();
     const { addToCart } = useCart();
-
-    useEffect(() => {
-        if (category !== 'cria-do-morro') {
-            setSelectedSubCategory('todos');
-        }
-    }, [category]);
 
     useEffect(() => {
         const fetchProducts = async () => {
@@ -44,35 +38,24 @@ const ProductCatalog = () => {
                 setLoading(false);
             }
         };
+
+        const fetchCategories = async () => {
+            const cats = await getCategories();
+            const map: Record<string, string> = {};
+            cats.forEach(c => map[c.slug] = c.title);
+            setCategoryTitleMap(map);
+        };
+
         fetchProducts();
+        fetchCategories();
     }, [toast]);
 
     const filteredProducts = useMemo(() => {
         let filtered = products;
 
-        // Map URL category to database category/sub_category
-        const categoryMap: Record<string, { cat: string, sub?: string }> = {
-            'cria-do-morro': { cat: 'cria-do-morro' },
-            'aba-reta': { cat: 'cria-do-morro', sub: 'bones' },
-            'trucker': { cat: 'cria-do-morro', sub: 'bucket' },
-            'personalizados': { cat: 'personalizados' }
-        };
-
         // Filter by category from URL
-        if (category && categoryMap[category]) {
-            const mapped = categoryMap[category];
-            filtered = filtered.filter(p => p.category === mapped.cat);
-
-            // If it's a dedicated session (aba-reta or trucker), filter by sub-category
-            if (mapped.sub) {
-                filtered = filtered.filter(p => p.sub_category === mapped.sub);
-            }
-            // If it's the main cria-do-morro, apply the local filter button state
-            else if (category === 'cria-do-morro' && selectedSubCategory !== 'todos') {
-                filtered = filtered.filter(p => p.sub_category === selectedSubCategory);
-            }
-        } else if (category) {
-            filtered = filtered.filter(p => p.category === category);
+        if (category) {
+            filtered = filtered.filter(p => p.category === category || p.sub_category === category);
         }
 
         // Filter by search term
@@ -84,19 +67,12 @@ const ProductCatalog = () => {
         }
 
         return filtered;
-    }, [searchTerm, products, category, selectedSubCategory]);
+    }, [searchTerm, products, category]);
 
     const categoryTitle = useMemo(() => {
         if (!category) return 'Catálogo';
-        const titles: Record<string, string> = {
-            'cria-do-morro': 'Cria do Morro',
-            'vestuario': 'Vestuário',
-            'aba-reta': 'Aba Reta',
-            'trucker': 'Trucker',
-            'personalizados': 'Produtos Personalizados'
-        };
-        return titles[category] || category.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
-    }, [category]);
+        return categoryTitleMap[category] || category.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+    }, [category, categoryTitleMap]);
 
     const handleAddToCart = async (product: Product) => {
         if (!product.variants || product.variants.length === 0) return;
@@ -137,10 +113,8 @@ const ProductCatalog = () => {
                         className="mb-12 text-center"
                     >
                         <h1 className="font-poppins text-4xl md:text-5xl font-bold mb-4">
-                            {category === 'aba-reta' ? <>Sessão <span className="text-gradient">Aba Reta</span></> :
-                                category === 'trucker' ? <>Sessão <span className="text-gradient">Trucker</span></> :
-                                    category ? <>Nossos <span className="text-gradient">{categoryTitle}</span></> :
-                                        <>Nosso <span className="text-gradient">Catálogo</span></>}
+                            {category ? <>Nossos <span className="text-gradient">{categoryTitle}</span></> :
+                                <>Nosso <span className="text-gradient">Catálogo</span></>}
                         </h1>
                         <p className="text-gray-400 text-lg max-w-2xl mx-auto">
                             {category ? `Explorando itens da categoria ${categoryTitle}` : 'Encontre o uniforme perfeito para sua equipe ou empresa'}
@@ -162,38 +136,6 @@ const ProductCatalog = () => {
                                     />
                                 </div>
                             </div>
-
-                            {/* Sub-category Filter (Visible in all Cria do Morro related aliases) */}
-                            {(category === 'cria-do-morro' || category === 'aba-reta' || category === 'trucker') && (
-                                <div className="flex flex-wrap gap-2 pt-2">
-                                    {[
-                                        { id: 'todos', label: 'Todos', path: '/catalogo/cria-do-morro', isAlias: false },
-                                        { id: 'vestuario', label: 'Vestuário', path: '/catalogo/cria-do-morro', isAlias: false },
-                                        { id: 'bones', label: 'Aba Reta', path: '/catalogo/aba-reta', isAlias: true },
-                                        { id: 'bucket', label: 'Trucker', path: '/catalogo/trucker', isAlias: true }
-                                    ].map((sub) => {
-                                        const isActive = sub.isAlias
-                                            ? category === sub.id || (sub.id === 'bones' && category === 'aba-reta') || (sub.id === 'bucket' && category === 'trucker')
-                                            : category === 'cria-do-morro' && selectedSubCategory === sub.id;
-
-                                        return (
-                                            <Link
-                                                key={sub.id}
-                                                to={sub.path}
-                                                onClick={() => !sub.isAlias ? setSelectedSubCategory(sub.id) : setSelectedSubCategory('todos')}
-                                                className={cn(
-                                                    "px-6 py-2 rounded-full text-sm font-bold uppercase tracking-wider transition-all duration-300 border-2 flex items-center justify-center",
-                                                    isActive
-                                                        ? "bg-[var(--color-gold)] border-[var(--color-gold)] text-black"
-                                                        : "bg-transparent border-gray-800 text-gray-400 hover:border-[var(--color-gold)]/50"
-                                                )}
-                                            >
-                                                {sub.label}
-                                            </Link>
-                                        );
-                                    })}
-                                </div>
-                            )}
 
                             <p className="text-gray-400">
                                 {filteredProducts.length} {filteredProducts.length === 1 ? 'produto encontrado' : 'produtos encontrados'}

@@ -6,6 +6,7 @@ import { ShoppingCart, Loader2 } from 'lucide-react';
 import { useCart } from '@/hooks/useCart';
 import { useToast } from '@/components/ui/use-toast';
 import { getProducts, getProductQuantities, calculateProductPrices } from '@/api/EcommerceApi';
+import { supabase } from '@/lib/supabase'; // Import Supabase Client
 import { Product } from '@/types';
 
 const placeholderImage = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMzc0MTUxIi8+CiAgPHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzlDQTNBRiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pgo8L3N2Zz4K";
@@ -82,45 +83,60 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: index * 0.05 }}
+            className="h-full"
         >
-            <Link to={`/produto/${product.id}`}>
-                <div className="rounded-xl border border-gray-800 bg-gray-900/50 backdrop-blur-sm shadow-lg overflow-hidden group transition-all duration-300 hover:shadow-premium-lg hover:border-[var(--color-gold)]/50 hover:-translate-y-1 h-full flex flex-col">
-                    <div className="relative aspect-[4/5] overflow-hidden">
+            <Link to={`/produto/${product.id}`} className="block h-full group">
+                <div className="relative rounded-2xl border border-gray-800 bg-[#0B0C10] shadow-2xl overflow-hidden group transition-all duration-300 hover:border-[var(--color-gold)]/50 hover:shadow-premium-lg hover:-translate-y-1 h-full flex flex-col">
+
+                    {/* Image Container - Contained style per Reference 2 */}
+                    <div className="relative aspect-[3/4] overflow-hidden bg-gray-900 mx-3 mt-3 rounded-xl">
                         <img
                             src={product.image || placeholderImage}
                             alt={product.title}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                        {/* Gradient Overlay */}
+                        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/80 to-transparent opacity-60" />
 
                         {/* Discount Badge */}
                         {discountPercentage && (
-                            <div className="absolute top-3 left-3 z-10 bg-red-600 text-white text-[10px] font-black px-2 py-1 rounded-md shadow-lg uppercase tracking-tighter animate-pulse">
+                            <div className="absolute top-2 left-2 z-10 bg-[#FF4D4D] text-white text-[10px] font-black px-2 py-0.5 rounded-sm shadow-lg uppercase tracking-wider">
                                 {discountPercentage}% OFF
                             </div>
                         )}
 
-                        <div className="absolute bottom-3 right-3 bg-black/80 backdrop-blur text-white text-xs font-bold px-3 py-1.5 rounded-full flex items-baseline gap-2 border border-white/10 shadow-xl">
+                        {/* Price Tag as Pill - Bottom Right */}
+                        <div className="absolute bottom-2 right-2 bg-[#2a2a2a] text-[#FFD700] text-[11px] font-black px-3 py-1 rounded-full shadow-xl border border-white/5 flex items-center gap-1.5">
                             {hasDiscount && (
-                                <span className="line-through opacity-50 text-gray-400 text-[10px]">{displayPriceAntigo}</span>
+                                <span className="line-through text-gray-500 text-[9px] font-medium hidden sm:inline-block mr-1">{displayPriceAntigo}</span>
                             )}
-                            <span className="text-[var(--color-gold)] text-sm font-bold">{displayPriceAtual}</span>
+                            {displayPriceAtual}
                         </div>
                     </div>
 
-                    <div className="p-5 flex flex-col flex-grow">
-                        <h3 className="text-lg font-bold truncate text-white group-hover:text-[var(--color-gold)] transition-colors uppercase">
+                    <div className="p-4 flex flex-col flex-grow">
+                        <h3 className="text-sm font-black text-white group-hover:text-[var(--color-gold)] transition-colors uppercase leading-tight line-clamp-2 mb-1">
                             {product.title}
                         </h3>
-                        <p className="text-sm text-gray-400 mt-2 line-clamp-2 flex-grow font-medium uppercase text-[10px] tracking-widest leading-relaxed">
-                            {product.subtitle || 'Qualidade excepcional A Fabricah Cria.'}
+
+                        <p className="text-[10px] text-gray-400 line-clamp-2 mb-3 leading-relaxed font-medium uppercase tracking-wide">
+                            {product.subtitle || 'Qualidade excepcional. Estilo urbano autêntico.'}
                         </p>
-                        <Button
-                            onClick={handleAddToCart}
-                            className="w-full mt-4 bg-[var(--color-gold)] hover:bg-yellow-500 text-black font-black uppercase text-[10px] tracking-widest transition-colors h-12"
-                        >
-                            <ShoppingCart className="mr-2 h-4 w-4" /> Adicionar
-                        </Button>
+
+                        {/* Installment Info */}
+                        <div className="hidden sm:block text-[9px] text-[#2dd4bf] font-bold tracking-wide mb-3 uppercase">
+                            6x de {formatPrice((product.preco_atual || (product.price_in_cents ? product.price_in_cents / 100 : 0)) / 6)} sem juros
+                        </div>
+
+                        <div className="mt-auto">
+                            <Button
+                                onClick={handleAddToCart}
+                                className="w-full bg-[var(--color-gold)] hover:bg-[#d4af37] text-black font-black uppercase text-[11px] tracking-widest h-10 rounded-md shadow-lg transition-transform active:scale-95 flex items-center justify-center gap-2"
+                            >
+                                <ShoppingCart className="h-3.5 w-3.5" /> Adicionar
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </Link>
@@ -178,7 +194,25 @@ const ProductsList = ({ limit }: { limit?: number }) => {
             }
         };
 
+        // Initial fetch
         fetchProductsWithQuantities();
+
+        // Realtime Subscription
+        const subscription = supabase
+            .channel('public:products')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'products' },
+                (payload) => {
+                    console.log('🔄 Realtime update received!', payload);
+                    fetchProductsWithQuantities();
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(subscription);
+        };
     }, []);
 
     if (loading) {

@@ -19,14 +19,15 @@ function ProductDetailPage() {
     const [error, setError] = useState<string | null>(null);
     const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
     const [selectedSize, setSelectedSize] = useState<string | null>(null); // New state for size
-    const [customization, setCustomization] = useState(''); // New state for customization
+
     const [quantity, setQuantity] = useState(1);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const { addToCart } = useCart();
     const { toast } = useToast();
 
     const handleAddToCart = useCallback(async () => {
-        if (!selectedSize) {
+        // Require size ONLY if product has sizes defined
+        if (product?.sizes && product.sizes.length > 0 && !selectedSize) {
             toast({
                 variant: "destructive",
                 title: "Selecione um tamanho",
@@ -38,11 +39,12 @@ function ProductDetailPage() {
         if (product && selectedVariant) {
             const availableQuantity = selectedVariant.stock_quantity;
             try {
-                // Pass size and customization to addToCart
-                await addToCart(product, { ...selectedVariant, size: selectedSize, customization } as any, quantity, availableQuantity);
+                // Pass size to addToCart (or 'Único' if none)
+                const finalSize = selectedSize || 'Único';
+                await addToCart(product, { ...selectedVariant, size: finalSize } as any, quantity, availableQuantity);
                 toast({
                     title: "Adicionado ao Carrinho! 🛒",
-                    description: `${quantity} x ${product.title} (Tam: ${selectedSize}) adicionado.`,
+                    description: `${quantity} x ${product.title} (Tam: ${finalSize}) adicionado.`,
                 });
             } catch (error: any) {
                 toast({
@@ -52,7 +54,7 @@ function ProductDetailPage() {
                 });
             }
         }
-    }, [product, selectedVariant, selectedSize, customization, quantity, addToCart, toast]);
+    }, [product, selectedVariant, selectedSize, quantity, addToCart, toast]);
 
     const handleQuantityChange = useCallback((amount: number) => {
         setQuantity(prevQuantity => {
@@ -177,11 +179,11 @@ function ProductDetailPage() {
                     <div className="grid md:grid-cols-2 gap-12">
                         {/* Gallery */}
                         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }} className="space-y-4">
-                            <div className="relative overflow-hidden rounded-xl border border-gray-800 bg-gray-900/50 aspect-square">
+                            <div className="relative overflow-hidden rounded-xl">
                                 <img
                                     src={currentImage || placeholderImage}
                                     alt={product.title}
-                                    className="w-full h-full object-cover"
+                                    className="w-full h-auto max-h-[600px] object-contain mx-auto"
                                 />
 
                                 {hasMultipleImages && (
@@ -241,40 +243,30 @@ function ProductDetailPage() {
                             <div className="prose prose-invert max-w-none text-gray-300 mb-8" dangerouslySetInnerHTML={{ __html: product.description || '' }} />
 
                             {/* Size Selector */}
-                            <div className="mb-8">
-                                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3">Tamanho</h3>
-                                <div className="flex flex-wrap gap-3">
-                                    {(product.sizes && product.sizes.length > 0 ? product.sizes : ['P', 'M', 'G', 'GG', 'EXG', 'ESP', 'ESP1', 'ESP2']).map((size: string) => (
-                                        <button
-                                            key={size}
-                                            onClick={() => setSelectedSize(size)}
-                                            className={`w-12 h-12 rounded-lg border-2 flex items-center justify-center font-bold text-sm transition-all ${selectedSize === size
-                                                ? 'border-dourado bg-dourado text-black'
-                                                : 'border-gray-700 text-gray-400 hover:border-dourado hover:text-dourado'
-                                                }`}
-                                        >
-                                            {size}
-                                        </button>
-                                    ))}
-                                </div>
-                                {!selectedSize && (
-                                    <p className="text-red-400 text-xs mt-2">* Selecione um tamanho</p>
-                                )}
-                            </div>
-
-                            {/* Customization (If applicable) */}
-                            {product.customizable && (
-                                <div className="mb-8 p-4 bg-gray-900/50 rounded-xl border border-gray-800">
-                                    <h3 className="text-sm font-bold text-white mb-2">Personalização</h3>
-                                    <p className="text-xs text-gray-400 mb-2">Este produto permite personalização.</p>
-                                    <input
-                                        type="text"
-                                        placeholder="Nome ou Detalhes (Opcional)"
-                                        className="w-full bg-black border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-600 focus:outline-none focus:border-dourado"
-                                        onChange={(e) => setCustomization(e.target.value)}
-                                    />
+                            {product.sizes && product.sizes.length > 0 && (
+                                <div className="mb-8">
+                                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3">Tamanho</h3>
+                                    <div className="flex flex-wrap gap-3">
+                                        {product.sizes.map((size: string) => (
+                                            <button
+                                                key={size}
+                                                onClick={() => setSelectedSize(size)}
+                                                className={`w-12 h-12 rounded-lg border-2 flex items-center justify-center font-bold text-sm transition-all ${selectedSize === size
+                                                    ? 'border-dourado bg-dourado text-black'
+                                                    : 'border-gray-700 text-gray-400 hover:border-dourado hover:text-dourado'
+                                                    }`}
+                                            >
+                                                {size}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    {!selectedSize && (
+                                        <p className="text-red-400 text-xs mt-2">* Selecione um tamanho</p>
+                                    )}
                                 </div>
                             )}
+
+
 
                             <div className="flex flex-col sm:flex-row gap-6 mb-8">
                                 <div className="flex items-center border-2 border-gray-700 rounded-xl bg-gray-900/50 w-max">

@@ -13,11 +13,7 @@ const HomePage = () => {
             title: 'Qualidade Excepcional',
             description: 'Materiais de alta qualidade para máxima durabilidade',
         },
-        {
-            icon: Users,
-            title: 'Personalização Total',
-            description: 'Customize cores, logos e designs conforme sua necessidade',
-        },
+
         {
             icon: Zap,
             title: 'Entrega Rápida',
@@ -78,7 +74,7 @@ const HomePage = () => {
                             className="text-lg md:text-2xl text-gray-300 max-w-2xl mx-auto px-4"
                         >
                             Uniformes exclusivos para equipes esportivas, empresas e eventos especiais.
-                            Qualidade excepcional com personalização completa.
+                            Qualidade excepcional para você.
                         </motion.p>
 
                         <motion.div
