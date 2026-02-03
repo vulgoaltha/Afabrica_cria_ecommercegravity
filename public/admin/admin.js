@@ -15,11 +15,11 @@ let allProducts = [];
 async function checkAuth() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session && window.PAGE_ID !== 'login') {
-        window.location.href = 'login.html';
+        window.location.href = '/admin/login.html';
         return null;
     }
     if (session && window.PAGE_ID === 'login') {
-        window.location.href = 'index.html';
+        window.location.href = '/admin/index.html';
     }
     return session;
 }
@@ -40,7 +40,7 @@ if (window.PAGE_ID === 'login') {
             errorMsg.textContent = error.message;
             errorMsg.classList.add('text-red-500');
         } else {
-            window.location.href = 'index.html';
+            window.location.href = '/admin/index.html';
         }
     });
 }
@@ -63,7 +63,7 @@ async function initDashboard() {
 function setupTabAuth() {
     document.getElementById('logoutBtn').addEventListener('click', async () => {
         await supabase.auth.signOut();
-        window.location.href = 'login.html';
+        window.location.href = '/admin/login.html';
     });
 
     const tabBtns = document.querySelectorAll('.tab-btn');
