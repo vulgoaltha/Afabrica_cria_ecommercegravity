@@ -53,9 +53,10 @@ const About = () => {
             <section className="relative min-h-[60vh] flex items-center justify-center overflow-hidden">
                 <div className="absolute inset-0">
                     <img
-                        src="https://images.unsplash.com/photo-1637666679781-7e535cd26dfa"
+                        src="https://images.unsplash.com/photo-1637666679781-7e535cd26dfa?auto=format&fit=crop&q=85&w=1920"
                         alt="About Hero"
                         className="w-full h-full object-cover"
+                        loading="eager"
                     />
                     <div className="absolute inset-0 bg-gradient-to-b from-preto/80 via-preto/60 to-preto" />
                 </div>
@@ -68,15 +69,16 @@ const About = () => {
                         className="max-w-4xl mx-auto space-y-6"
                     >
                         <motion.div
-                            initial={{ opacity: 0, scale: 0.8 }}
+                            initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 0.8 }}
+                            transition={{ duration: 0.8, ease: "easeOut" }}
                             className="flex justify-center mb-12 pt-32 md:pt-40"
                         >
                             <img
                                 src={logo}
                                 alt="Cria do Morro Logo"
                                 className="h-24 md:h-32 w-auto object-contain mx-auto"
+                                loading="eager"
                             />
                         </motion.div>
                         <p className="text-xl md:text-2xl text-gray-300">
@@ -190,14 +192,15 @@ const About = () => {
                         <motion.div
                             initial={{ opacity: 0, x: 20 }}
                             whileInView={{ opacity: 1, x: 0 }}
-                            viewport={{ once: true }}
+                            viewport={{ once: true, margin: "-100px" }}
                             transition={{ duration: 0.6 }}
                             className="relative"
                         >
                             <img
-                                src="https://images.unsplash.com/photo-1637666639858-e914177a9146"
+                                src="https://images.unsplash.com/photo-1637666639858-e914177a9146?auto=format&fit=crop&q=80&w=1200"
                                 alt="Why Choose Us"
                                 className="rounded-xl shadow-premium-lg"
+                                loading="lazy"
                             />
                         </motion.div>
                     </div>
