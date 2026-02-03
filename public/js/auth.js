@@ -26,7 +26,7 @@ export async function loginGoogle() {
 export async function logout() {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
-    window.location.href = "/login.html";
+    window.location.href = "/admin/login.html";
 }
 
 // PROTEGER ADMIN
@@ -34,14 +34,14 @@ export async function protegerAdmin(callback) {
     const { data: { session } } = await supabase.auth.getSession();
 
     if (!session) {
-        window.location.href = "/login.html";
+        window.location.href = "/admin/login.html";
     } else {
         if (callback) callback(session.user);
     }
 
     supabase.auth.onAuthStateChange((event, session) => {
         if (event === 'SIGNED_OUT' || !session) {
-            window.location.href = "/login.html";
+            window.location.href = "/admin/login.html";
         }
     });
 }
