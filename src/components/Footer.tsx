@@ -11,7 +11,7 @@ const Footer = () => {
     const [email, setEmail] = useState('');
     const { toast } = useToast();
 
-    const handleNewsletterSubmit = (e) => {
+    const handleNewsletterSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (email) {
             toast({
