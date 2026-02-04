@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Helmet } from 'react-helmet';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { getProduct, getProductQuantities, calculateProductPrices } from '@/api/EcommerceApi';
+import { getProduct, getProductQuantities, calculateProductPrices, formatCurrency } from '@/api/EcommerceApi';
 import { Product, ProductVariant } from '@/types';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/hooks/useCart';
@@ -294,11 +294,16 @@ function ProductDetailPage() {
                             <h1 className="text-4xl md:text-5xl font-poppins font-bold text-white mb-4 leading-tight">{product.title}</h1>
                             <p className="text-xl text-gray-300 mb-8 font-light">{product.subtitle}</p>
 
-                            <div className="flex items-baseline gap-4 mb-8 pb-8 border-b border-gray-800">
-                                <span className="text-4xl font-bold text-dourado">{price}</span>
-                                {priceInfo.hasDiscount && (
-                                    <span className="text-2xl text-gray-500 line-through">{originalPrice}</span>
-                                )}
+                            <div className="flex flex-col mb-8 pb-8 border-b border-gray-800">
+                                <div className="flex items-baseline gap-4">
+                                    <span className="text-4xl font-bold text-dourado">{price}</span>
+                                    {priceInfo.hasDiscount && (
+                                        <span className="text-2xl text-gray-500 line-through">{originalPrice}</span>
+                                    )}
+                                </div>
+                                <span className="text-sm text-[#2dd4bf] font-bold tracking-wide uppercase mt-2">
+                                    6x de {formatCurrency(priceInfo.currentPrice / 6, false)} sem juros
+                                </span>
                             </div>
 
                             <div className="prose prose-invert max-w-none text-gray-300 mb-8" dangerouslySetInnerHTML={{ __html: product.description || '' }} />

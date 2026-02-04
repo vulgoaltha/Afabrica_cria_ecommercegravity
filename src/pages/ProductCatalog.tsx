@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/hooks/useCart';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
-import { getProducts, calculateProductPrices, getCategories } from '@/api/EcommerceApi';
+import { getProducts, calculateProductPrices, getCategories, formatCurrency } from '@/api/EcommerceApi';
 import { Product } from '@/types';
 
 const ProductCatalog = () => {
@@ -212,6 +212,9 @@ const ProductCatalog = () => {
                                                         )}
                                                         <span className="text-2xl font-bold text-dourado">
                                                             {priceInfo.displayPrice}
+                                                        </span>
+                                                        <span className="text-[10px] text-[#2dd4bf] font-bold tracking-wide uppercase mt-1">
+                                                            6x de {formatCurrency(priceInfo.currentPrice / 6, false)} sem juros
                                                         </span>
                                                     </div>
                                                     <Button

@@ -125,8 +125,8 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
                         </p>
 
                         {/* Installment Info */}
-                        <div className="hidden sm:block text-[9px] text-[#2dd4bf] font-bold tracking-wide mb-3 uppercase">
-                            6x de {formatPrice((product.preco_atual || (product.price_in_cents ? product.price_in_cents / 100 : 0)) / 6)} sem juros
+                        <div className="text-[10px] text-[#2dd4bf] font-bold tracking-wide mb-3 uppercase">
+                            6x de {formatPrice(priceInfo.currentPrice / 6)} sem juros
                         </div>
 
                         <div className="mt-auto">
