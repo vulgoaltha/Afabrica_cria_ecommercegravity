@@ -8,19 +8,7 @@ import { Button } from '@/components/ui/button';
 import logo from '@/assets/logo.webp';
 
 const Footer = () => {
-    const [email, setEmail] = useState('');
     const { toast } = useToast();
-
-    const handleNewsletterSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (email) {
-            toast({
-                title: 'Inscrição realizada!',
-                description: 'Você receberá nossas novidades em breve.',
-            });
-            setEmail('');
-        }
-    };
 
     const quickLinks = [
         { name: 'Home', path: '/' },
@@ -36,9 +24,9 @@ const Footer = () => {
     ];
 
     const socialLinks = [
-        { icon: Instagram, href: '#', label: 'Instagram' },
-        { icon: Facebook, href: '#', label: 'Facebook' },
-        { icon: Linkedin, href: '#', label: 'LinkedIn' },
+        { icon: Instagram, href: 'https://www.instagram.com/afabricahcria/', label: 'Instagram' },
+        { icon: Facebook, href: 'https://www.facebook.com/afabricahcria.oficial', label: 'Facebook' },
+        { icon: Linkedin, href: 'https://www.linkedin.com/company/afabricahcria', label: 'LinkedIn' },
     ];
 
     return (
@@ -133,25 +121,6 @@ const Footer = () => {
                                     <span>São Paulo, SP - Brasil</span>
                                 </li>
                             </ul>
-                        </div>
-
-                        <div>
-                            <h3 className="text-lg font-semibold mb-4 text-[var(--color-gold)] uppercase tracking-widest text-xs">
-                                Newsletter
-                            </h3>
-                            <form onSubmit={handleNewsletterSubmit} className="flex gap-2">
-                                <Input
-                                    type="email"
-                                    placeholder="Seu e-mail"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    required
-                                    className="flex-1 bg-gray-900/50 border-gray-800 focus:border-[var(--color-gold)]"
-                                />
-                                <Button type="submit" size="icon" className="bg-[var(--color-gold)] hover:bg-yellow-500 text-black shrink-0">
-                                    <Send className="w-4 h-4" />
-                                </Button>
-                            </form>
                         </div>
                     </div>
                 </div>

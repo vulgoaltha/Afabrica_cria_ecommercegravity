@@ -5,7 +5,7 @@ import { Toaster } from '@/components/ui/toaster';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import ScrollToTop from '@/components/ScrollToTop';
-import WhatsAppButton from '@/components/WhatsAppButton';
+import ChatBot from '@/components/ChatBot';
 import HomePage from '@/pages/HomePage';
 import ProductCatalog from '@/pages/ProductCatalog';
 import ProductDetailPage from '@/pages/ProductDetailPage';
@@ -38,7 +38,7 @@ function App() {
                     </main>
                     <Footer />
                     <Toaster />
-                    <WhatsAppButton />
+                    <ChatBot />
                 </div>
             </Router>
         </CartProvider>

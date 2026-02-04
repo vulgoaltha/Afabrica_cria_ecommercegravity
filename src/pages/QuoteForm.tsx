@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
-import { Send, Upload } from 'lucide-react';
+import { Send } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -11,10 +11,7 @@ interface QuoteFormData {
     name: string;
     email: string;
     phone: string;
-    company: string;
-    uniformType: string;
-    quantity: string;
-    description: string;
+    message: string;
 }
 
 interface QuoteErrors {
@@ -28,14 +25,11 @@ const QuoteForm = () => {
         name: '',
         email: '',
         phone: '',
-        company: '',
-        uniformType: '',
-        quantity: '',
-        description: '',
+        message: '',
     });
     const [errors, setErrors] = useState<QuoteErrors>({});
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
         if (errors[name]) {
@@ -53,8 +47,7 @@ const QuoteForm = () => {
             newErrors.email = 'Email inválido';
         }
         if (!formData.phone.trim()) newErrors.phone = 'Telefone é obrigatório';
-        if (!formData.uniformType.trim()) newErrors.uniformType = 'Tipo de uniforme é obrigatório';
-        if (!formData.quantity.trim()) newErrors.quantity = 'Quantidade é obrigatória';
+        if (!formData.message.trim()) newErrors.message = 'A mensagem é obrigatória';
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -77,18 +70,15 @@ const QuoteForm = () => {
         // Simulate API call
         setTimeout(() => {
             toast({
-                title: 'Orçamento enviado com sucesso!',
-                description: 'Entraremos em contato em breve com sua proposta personalizada.',
+                title: 'Mensagem enviada com sucesso!',
+                description: 'Entraremos em contato em breve.',
             });
 
             setFormData({
                 name: '',
                 email: '',
                 phone: '',
-                company: '',
-                uniformType: '',
-                quantity: '',
-                description: '',
+                message: '',
             });
 
             setIsSubmitting(false);
@@ -98,10 +88,10 @@ const QuoteForm = () => {
     return (
         <>
             <Helmet>
-                <title>Solicitar Orçamento - A Fabricah Cria</title>
+                <title>Contato - A Fabricah Cria</title>
                 <meta
                     name="description"
-                    content="Solicite um orçamento personalizado para seus uniformes. Nossa equipe está pronta para atendê-lo."
+                    content="Entre em contato com a A Fabricah Cria. Nossa equipe está pronta para atendê-lo."
                 />
             </Helmet>
 
@@ -114,10 +104,10 @@ const QuoteForm = () => {
                         className="text-center mb-12"
                     >
                         <h1 className="font-poppins text-4xl md:text-5xl font-bold mb-4">
-                            Solicite um <span className="text-gradient">Orçamento</span>
+                            Entre em <span className="text-gradient">Contato</span>
                         </h1>
                         <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-                            Preencha o formulário abaixo e nossa equipe entrará em contato com uma proposta personalizada
+                            Preencha o formulário abaixo e nossa equipe retornará o mais breve possível
                         </p>
                     </motion.div>
 
@@ -130,7 +120,7 @@ const QuoteForm = () => {
                     >
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* Name */}
-                            <div>
+                            <div className="md:col-span-2">
                                 <label htmlFor="name" className="block font-semibold mb-2">
                                     Nome Completo *
                                 </label>
@@ -182,111 +172,24 @@ const QuoteForm = () => {
                                     <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
                                 )}
                             </div>
-
-                            {/* Company */}
-                            <div>
-                                <label htmlFor="company" className="block font-semibold mb-2">
-                                    Empresa/Time
-                                </label>
-                                <Input
-                                    id="company"
-                                    name="company"
-                                    type="text"
-                                    value={formData.company}
-                                    onChange={handleChange}
-                                    placeholder="Nome da empresa ou time"
-                                />
-                            </div>
-
-                            {/* Uniform Type */}
-                            <div>
-                                <label htmlFor="uniformType" className="block font-semibold mb-2">
-                                    Tipo de Uniforme *
-                                </label>
-                                <select
-                                    id="uniformType"
-                                    name="uniformType"
-                                    value={formData.uniformType}
-                                    onChange={handleChange}
-                                    className={`w-full px-4 py-3 rounded-lg border bg-gray-900/50 text-white focus:outline-none focus:ring-2 transition-all duration-300 ${errors.uniformType
-                                        ? 'border-red-500 focus:border-red-500 focus:ring-red-500/50'
-                                        : 'border-gray-700 focus:border-dourado focus:ring-dourado/50'
-                                        }`}
-                                >
-                                    <option value="">Selecione...</option>
-                                    <option value="Camisetas">Camisetas</option>
-                                    <option value="Calções">Calções</option>
-                                    <option value="Meias">Meias</option>
-                                    <option value="Bonés">Bonés</option>
-                                    <option value="Jaquetas">Jaquetas</option>
-                                    <option value="Polos">Polos</option>
-                                    <option value="Kit Completo">Kit Completo</option>
-                                </select>
-                                {errors.uniformType && (
-                                    <p className="text-red-500 text-sm mt-1">{errors.uniformType}</p>
-                                )}
-                            </div>
-
-                            {/* Quantity */}
-                            <div>
-                                <label htmlFor="quantity" className="block font-semibold mb-2">
-                                    Quantidade *
-                                </label>
-                                <Input
-                                    id="quantity"
-                                    name="quantity"
-                                    type="number"
-                                    value={formData.quantity}
-                                    onChange={handleChange}
-                                    placeholder="Ex: 50"
-                                    min="1"
-                                />
-                                {errors.quantity && (
-                                    <p className="text-red-500 text-sm mt-1">{errors.quantity}</p>
-                                )}
-                            </div>
                         </div>
 
-                        {/* Description */}
+                        {/* Message */}
                         <div>
-                            <label htmlFor="description" className="block font-semibold mb-2">
-                                Descrição da Personalização
+                            <label htmlFor="message" className="block font-semibold mb-2">
+                                Mensagem *
                             </label>
                             <Textarea
-                                id="description"
-                                name="description"
-                                value={formData.description}
+                                id="message"
+                                name="message"
+                                value={formData.message}
                                 onChange={handleChange}
-                                placeholder="Descreva detalhes sobre cores, logos, tamanhos, prazos e qualquer outra informação relevante..."
+                                placeholder="Como podemos ajudar você hoje?"
                                 rows={5}
                             />
-                        </div>
-
-                        {/* File Upload */}
-                        <div>
-                            <label className="block font-semibold mb-2">
-                                Enviar Logo/Design (Opcional)
-                            </label>
-                            <div className="border-2 border-dashed border-gray-700 rounded-lg p-8 text-center hover:border-dourado/50 transition-colors cursor-pointer">
-                                <Upload className="w-12 h-12 mx-auto mb-4 text-gray-500" />
-                                <p className="text-gray-400 mb-2">
-                                    Clique para selecionar ou arraste arquivos aqui
-                                </p>
-                                <p className="text-sm text-gray-500">
-                                    PNG, JPG, SVG até 10MB
-                                </p>
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    className="hidden"
-                                    onChange={() => {
-                                        toast({
-                                            title: '🚧 Upload de arquivos',
-                                            description: 'Esta funcionalidade estará disponível em breve!',
-                                        });
-                                    }}
-                                />
-                            </div>
+                            {errors.message && (
+                                <p className="text-red-500 text-sm mt-1">{errors.message}</p>
+                            )}
                         </div>
 
                         {/* Submit Button */}
@@ -301,7 +204,7 @@ const QuoteForm = () => {
                             ) : (
                                 <>
                                     <Send className="w-5 h-5 mr-2" />
-                                    Solicitar Orçamento
+                                    Enviar Mensagem
                                 </>
                             )}
                         </Button>

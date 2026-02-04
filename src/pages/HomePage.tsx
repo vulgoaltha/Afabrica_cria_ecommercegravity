@@ -13,7 +13,11 @@ const HomePage = () => {
             title: 'Qualidade Excepcional',
             description: 'Materiais de alta qualidade para máxima durabilidade',
         },
-
+        {
+            icon: Users,
+            title: 'Atendimento Especializado',
+            description: 'Suporte personalizado para criar o uniforme dos seus sonhos',
+        },
         {
             icon: Zap,
             title: 'Entrega Rápida',
@@ -185,32 +189,6 @@ const HomePage = () => {
                 </div>
             </section>
 
-            {/* CTA Section */}
-            <section className="py-16 md:py-24 bg-gradient-to-b from-gray-900 to-preto">
-                <div className="container mx-auto px-4">
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        whileInView={{ opacity: 1, scale: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.6 }}
-                        className="max-w-4xl mx-auto text-center bg-gradient-to-br from-dourado/20 to-transparent border border-dourado/30 rounded-2xl p-8 md:p-12"
-                    >
-                        <h2 className="font-poppins text-3xl md:text-5xl font-bold mb-6">
-                            Pronto para criar seu <span className="text-gradient">uniforme ideal</span>?
-                        </h2>
-                        <p className="text-lg md:text-xl text-gray-300 mb-8">
-                            Entre em contato conosco e receba um orçamento personalizado sem compromisso
-                        </p>
-                        <Button
-                            asChild
-                            size="lg"
-                            className="bg-dourado hover:bg-yellow-500 text-preto font-semibold px-8 py-6 text-lg w-full sm:w-auto"
-                        >
-                            <Link to="/contato">Solicitar Orçamento Gratuito</Link>
-                        </Button>
-                    </motion.div>
-                </div>
-            </section>
         </>
     );
 };

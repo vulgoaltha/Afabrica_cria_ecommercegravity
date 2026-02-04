@@ -7,7 +7,9 @@ import { Product, ProductVariant } from '@/types';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/hooks/useCart';
 import { useToast } from '@/components/ui/use-toast';
-import { ShoppingCart, Loader2, ArrowLeft, CheckCircle, Minus, Plus, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ShoppingCart, Loader2, ArrowLeft, CheckCircle, Minus, Plus, XCircle, ChevronLeft, ChevronRight, Truck } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { AnimatePresence } from 'framer-motion';
 
 const placeholderImage = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMzc0MTUxIi8+CiAgPHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzlDQTNBRiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pgo8L3N2Zz4K";
 
@@ -24,6 +26,65 @@ function ProductDetailPage() {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const { addToCart } = useCart();
     const { toast } = useToast();
+
+    // Shipping Calculator States
+    const [cep, setCep] = useState('');
+    const [isCalculating, setIsCalculating] = useState(false);
+    const [shippingResult, setShippingResult] = useState<{ price: string, deadline: string, city: string } | null>(null);
+    const [showShipping, setShowShipping] = useState(true); // Default to true in detail page
+
+    const handleCalculateShipping = async () => {
+        const cleanCep = cep.replace(/\D/g, '');
+        if (cleanCep.length !== 8) {
+            toast({
+                title: "CEP inválido",
+                description: "Por favor, digite um CEP com 8 dígitos.",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        setIsCalculating(true);
+        try {
+            const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+            const data = await response.json();
+
+            if (data.erro) {
+                toast({
+                    title: "CEP não encontrado",
+                    description: "Verifique o número digitado.",
+                    variant: "destructive"
+                });
+            } else {
+                const region = data.uf;
+                const city = data.localidade;
+                let price = 25.00;
+                let deadline = '5-8 dias úteis';
+
+                if (region === 'SP') {
+                    price = 12.00;
+                    deadline = '1-3 dias úteis';
+                } else if (['RJ', 'MG', 'ES', 'PR', 'SC', 'RS'].includes(region)) {
+                    price = 18.00;
+                    deadline = '3-5 dias úteis';
+                }
+
+                setShippingResult({
+                    price: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price),
+                    deadline,
+                    city
+                });
+            }
+        } catch (error) {
+            toast({
+                title: "Erro ao calcular",
+                description: "Tente novamente em instantes.",
+                variant: "destructive"
+            });
+        } finally {
+            setIsCalculating(false);
+        }
+    };
 
     const handleAddToCart = useCallback(async () => {
         // Require size ONLY if product has sizes defined
@@ -301,6 +362,54 @@ function ProductDetailPage() {
                                     <XCircle size={18} /> Estoque insuficiente. Apenas {availableStock} restantes.
                                 </p>
                             )}
+
+                            {/* Shipping Calculator */}
+                            <div className="mt-8 pt-8 border-t border-gray-800">
+                                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                    <Truck size={18} className="text-dourado" /> Calcular Frete e Prazo
+                                </h3>
+                                <div className="flex gap-2 max-w-sm">
+                                    <Input
+                                        placeholder="Digite seu CEP (00000-000)"
+                                        value={cep}
+                                        onChange={(e) => setCep(e.target.value)}
+                                        className="bg-gray-900/50 border-gray-700 text-white h-12"
+                                        maxLength={9}
+                                    />
+                                    <Button
+                                        onClick={handleCalculateShipping}
+                                        disabled={isCalculating}
+                                        className="bg-gray-800 hover:bg-gray-700 text-white h-12 px-6 font-bold uppercase"
+                                    >
+                                        {isCalculating ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Calcular'}
+                                    </Button>
+                                </div>
+
+                                <AnimatePresence>
+                                    {shippingResult && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="mt-4 p-4 rounded-xl bg-gray-900/50 border border-gray-800 flex items-center justify-between"
+                                        >
+                                            <div className="space-y-1">
+                                                <p className="text-sm font-bold text-white uppercase">{shippingResult.city}</p>
+                                                <p className="text-xs text-gray-400">Entrega em até {shippingResult.deadline}</p>
+                                            </div>
+                                            <p className="text-lg font-bold text-dourado">{shippingResult.price}</p>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+
+                                <a
+                                    href="https://buscacepinter.correios.com.br/app/endereco/index.php"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-block mt-4 text-xs text-gray-500 hover:text-dourado transition-colors underline"
+                                >
+                                    Não sei meu CEP
+                                </a>
+                            </div>
 
                             {product.purchasable === false && (
                                 <p className="text-red-400 flex items-center gap-2 font-medium bg-red-900/20 py-2 px-4 rounded-lg w-max border border-red-900/50">

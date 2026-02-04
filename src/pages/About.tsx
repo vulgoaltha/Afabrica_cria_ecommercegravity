@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Award, Target, Users, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import logo from '@/assets/logo cria do morro.png';
+import logo from '@/assets/logo-cria-do-morro.webp';
 
 const About = () => {
     const values = [
@@ -56,7 +56,7 @@ const About = () => {
                         src="https://images.unsplash.com/photo-1637666679781-7e535cd26dfa?auto=format&fit=crop&q=85&w=1920"
                         alt="About Hero"
                         className="w-full h-full object-cover"
-                        loading="eager"
+                        loading="lazy"
                     />
                     <div className="absolute inset-0 bg-gradient-to-b from-preto/80 via-preto/60 to-preto" />
                 </div>
@@ -77,8 +77,8 @@ const About = () => {
                             <img
                                 src={logo}
                                 alt="Cria do Morro Logo"
-                                className="h-24 md:h-32 w-auto object-contain mx-auto"
-                                loading="eager"
+                                className="h-40 md:h-52 w-auto object-contain mx-auto"
+                                loading="lazy"
                             />
                         </motion.div>
                         <p className="text-xl md:text-2xl text-gray-300">
@@ -192,8 +192,8 @@ const About = () => {
                         <motion.div
                             initial={{ opacity: 0, x: 20 }}
                             whileInView={{ opacity: 1, x: 0 }}
-                            viewport={{ once: true, margin: "-100px" }}
-                            transition={{ duration: 0.6 }}
+                            viewport={{ once: true, margin: "-50px" }}
+                            transition={{ duration: 0.5 }}
                             className="relative"
                         >
                             <img
@@ -207,32 +207,6 @@ const About = () => {
                 </div>
             </section>
 
-            {/* CTA Section */}
-            <section className="py-16 md:py-24 bg-preto">
-                <div className="container mx-auto px-4">
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        whileInView={{ opacity: 1, scale: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.6 }}
-                        className="max-w-4xl mx-auto text-center bg-gradient-to-br from-dourado/20 to-transparent border border-dourado/30 rounded-2xl p-12"
-                    >
-                        <h2 className="font-poppins text-4xl md:text-5xl font-bold mb-6">
-                            Pronto para começar <span className="text-gradient">seu projeto</span>?
-                        </h2>
-                        <p className="text-xl text-gray-300 mb-8">
-                            Solicite um orçamento sem compromisso e descubra como podemos ajudar
-                        </p>
-                        <Button
-                            asChild
-                            size="lg"
-                            className="bg-dourado hover:bg-yellow-500 text-preto font-semibold px-8 py-6 text-lg"
-                        >
-                            <Link to="/contato">Solicitar Orçamento</Link>
-                        </Button>
-                    </motion.div>
-                </div>
-            </section>
         </>
     );
 };
