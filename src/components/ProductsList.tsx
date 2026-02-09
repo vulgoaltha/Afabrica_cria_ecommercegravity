@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ShoppingCart, Loader2 } from 'lucide-react';
 import { useCart } from '@/hooks/useCart';
 import { useToast } from '@/components/ui/use-toast';
+import { cn } from '@/lib/utils';
 import { getProducts, getProductQuantities, calculateProductPrices } from '@/api/EcommerceApi';
 import { supabase } from '@/lib/supabase'; // Import Supabase Client
 import { Product } from '@/types';
@@ -78,6 +79,19 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
         }
     }, [product, addToCart, toast, navigate]);
 
+    const THEMES: Record<string, { primary: string, secondary: string }> = {
+        'mangueira': { primary: "#EC008C", secondary: "#009543" },
+        'mangueira-1': { primary: "#EC008C", secondary: "#009543" },
+        'mangueira-2': { primary: "#EC008C", secondary: "#009543" },
+        'outros': { primary: "#00F2FE", secondary: "#4FACFE" },
+        'outros-2': { primary: "#F7971E", secondary: "#FFD200" },
+        'outros-3': { primary: "#E0E0E0", secondary: "#BDC3C7" }
+    };
+
+    const itemCategory = product.category?.toLowerCase() || product.sub_category?.toLowerCase() || '';
+    const theme = THEMES[itemCategory];
+    const isThemed = !!theme;
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -86,7 +100,20 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
             className="h-full"
         >
             <Link to={`/produto/${product.id}`} className="block h-full group">
-                <div className="relative rounded-2xl border border-gray-800 bg-[#0B0C10] shadow-2xl overflow-hidden group transition-all duration-300 hover:border-[var(--color-gold)]/50 hover:shadow-premium-lg hover:-translate-y-1 h-full flex flex-col">
+                <div className={cn(
+                    "relative rounded-2xl border bg-[#0B0C10] shadow-2xl overflow-hidden group transition-all duration-300 hover:shadow-premium-lg hover:-translate-y-1 h-full flex flex-col",
+                    isThemed
+                        ? "shadow-[0_0_20px_rgba(255,255,255,0.05)]"
+                        : "border-gray-800 hover:border-[var(--color-gold)]/50"
+                )}
+                    style={isThemed ? { borderColor: `${theme.primary}30` } : {}}
+                    onMouseEnter={(e) => {
+                        if (isThemed) e.currentTarget.style.borderColor = `${theme.primary}60`;
+                    }}
+                    onMouseLeave={(e) => {
+                        if (isThemed) e.currentTarget.style.borderColor = `${theme.primary}30`;
+                    }}
+                >
 
                     {/* Image Container - Contained style per Reference 2 */}
                     <div className="relative aspect-[3/4] overflow-hidden bg-gray-900 mx-3 mt-3 rounded-xl">
@@ -107,16 +134,28 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
                         )}
 
                         {/* Price Tag as Pill - Bottom Right */}
-                        <div className="absolute bottom-2 right-2 bg-[#2a2a2a] text-[#FFD700] text-[11px] font-black px-3 py-1 rounded-full shadow-xl border border-white/5 flex items-center gap-1.5">
+                        <div
+                            className="absolute bottom-2 right-2 text-[11px] font-black px-3 py-1 rounded-full shadow-xl border border-white/5 flex items-center gap-1.5"
+                            style={isThemed ? { backgroundColor: theme.primary, color: '#fff' } : { backgroundColor: '#2a2a2a', color: '#FFD700' }}
+                        >
                             {hasDiscount && (
-                                <span className="line-through text-gray-500 text-[9px] font-medium hidden sm:inline-block mr-1">{displayPriceAntigo}</span>
+                                <span className="line-through text-gray-400 text-[9px] font-medium hidden sm:inline-block mr-1">{displayPriceAntigo}</span>
                             )}
                             {displayPriceAtual}
                         </div>
                     </div>
 
                     <div className="p-4 flex flex-col flex-grow">
-                        <h3 className="text-sm font-black text-white group-hover:text-[var(--color-gold)] transition-colors uppercase leading-tight line-clamp-2 mb-1">
+                        <h3
+                            className="text-sm font-black transition-colors uppercase leading-tight line-clamp-2 mb-1 text-white"
+                            style={isThemed ? { transition: 'color 0.3s' } : {}}
+                            onMouseEnter={(e) => {
+                                if (isThemed) e.currentTarget.style.color = theme.primary;
+                            }}
+                            onMouseLeave={(e) => {
+                                if (isThemed) e.currentTarget.style.color = '#fff';
+                            }}
+                        >
                             {product.title}
                         </h3>
 
@@ -125,14 +164,18 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
                         </p>
 
                         {/* Installment Info */}
-                        <div className="text-[10px] text-[#2dd4bf] font-bold tracking-wide mb-3 uppercase">
+                        <div
+                            className="text-[10px] font-bold tracking-wide mb-3 uppercase"
+                            style={isThemed ? { color: theme.secondary } : { color: '#2dd4bf' }}
+                        >
                             6x de {formatPrice(priceInfo.currentPrice / 6)} sem juros
                         </div>
 
                         <div className="mt-auto">
                             <Button
                                 onClick={handleAddToCart}
-                                className="w-full bg-[var(--color-gold)] hover:bg-[#d4af37] text-black font-black uppercase text-[11px] tracking-widest h-10 rounded-md shadow-lg transition-transform active:scale-95 flex items-center justify-center gap-2"
+                                className="w-full font-black uppercase text-[11px] tracking-widest h-10 rounded-md shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2"
+                                style={isThemed ? { backgroundColor: theme.secondary, color: '#fff' } : { backgroundColor: 'var(--color-gold)', color: '#000' }}
                             >
                                 <ShoppingCart className="h-3.5 w-3.5" /> Adicionar
                             </Button>
@@ -144,7 +187,15 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
     );
 };
 
-const ProductsList = ({ limit }: { limit?: number }) => {
+const ProductsList = ({
+    limit,
+    categoryFilter,
+    excludeBranded = false
+}: {
+    limit?: number;
+    categoryFilter?: string;
+    excludeBranded?: boolean;
+}) => {
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -215,6 +266,28 @@ const ProductsList = ({ limit }: { limit?: number }) => {
         };
     }, []);
 
+    const displayedProducts = useMemo(() => {
+        let filtered = products;
+
+        if (excludeBranded) {
+            const brandedCategories = ['mangueira', 'outros', 'outros-2', 'outros-3'];
+            filtered = filtered.filter(p => {
+                const cat = p.category?.toLowerCase() || '';
+                const subCat = p.sub_category?.toLowerCase() || '';
+                return !brandedCategories.includes(cat) && !brandedCategories.includes(subCat);
+            });
+        }
+
+        if (categoryFilter) {
+            filtered = filtered.filter(p =>
+                p.category?.toLowerCase() === categoryFilter.toLowerCase() ||
+                p.sub_category?.toLowerCase() === categoryFilter.toLowerCase() ||
+                p.title?.toLowerCase().includes(categoryFilter.toLowerCase())
+            );
+        }
+        return limit ? filtered.slice(0, limit) : filtered;
+    }, [products, limit, categoryFilter, excludeBranded]);
+
     if (loading) {
         return (
             <div className="flex justify-center items-center h-64">
@@ -238,8 +311,6 @@ const ProductsList = ({ limit }: { limit?: number }) => {
             </div>
         );
     }
-
-    const displayedProducts = limit ? products.slice(0, limit) : products;
 
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">

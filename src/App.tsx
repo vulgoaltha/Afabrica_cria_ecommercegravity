@@ -11,7 +11,6 @@ import ProductCatalog from '@/pages/ProductCatalog';
 import ProductDetailPage from '@/pages/ProductDetailPage';
 import Cart from '@/pages/Cart';
 import Checkout from '@/pages/Checkout';
-import About from '@/pages/About';
 import QuoteForm from '@/pages/QuoteForm';
 import SuccessPage from '@/pages/SuccessPage';
 
@@ -31,7 +30,6 @@ function App() {
                             <Route path="/produto/:id" element={<ProductDetailPage />} />
                             <Route path="/carrinho" element={<Cart />} />
                             <Route path="/checkout" element={<Checkout />} />
-                            <Route path="/sobre" element={<About />} />
                             <Route path="/contato" element={<QuoteForm />} />
                             <Route path="/success" element={<SuccessPage />} />
                         </Routes>

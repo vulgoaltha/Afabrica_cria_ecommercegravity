@@ -98,14 +98,16 @@ function renderOrders() {
 
         // Status Color Logic
         let statusColor = 'bg-gray-100 text-gray-600';
-        if (order.status === 'Pago') statusColor = 'bg-green-100 text-green-700';
-        if (order.status === 'Aguardando pagamento') statusColor = 'bg-yellow-100 text-yellow-700';
-        if (order.status === 'Enviado') statusColor = 'bg-blue-100 text-blue-700';
-        if (order.status === 'Cancelado') statusColor = 'bg-red-100 text-red-700';
+        const status = order.status?.toLowerCase() || '';
+        if (status === 'pago') statusColor = 'bg-green-100 text-green-700';
+        if (status === 'aguardando pagamento') statusColor = 'bg-yellow-100 text-yellow-700';
+        if (status === 'enviado') statusColor = 'bg-blue-100 text-blue-700';
+        if (status === 'cancelado') statusColor = 'bg-red-100 text-red-700';
+        if (status === 'entregue') statusColor = 'bg-teal-100 text-teal-700';
 
         // Name Logic (Fallback for legacy data)
         const customerName = order.customer_name || 'Cliente';
-        const total = order.total_in_cents || 0;
+        const total = (order.total_in_cents || 0) / 100;
 
         tr.innerHTML = `
             <td class="px-6 py-4 font-mono text-xs text-gray-500">#${order.id.slice(0, 6)}</td>
@@ -159,7 +161,7 @@ function openOrderModal(orderId) {
     // Customer
     modalCustomerName.textContent = order.customer_name || 'N/A';
     modalCustomerEmail.textContent = order.customer_email || 'N/A';
-    // modalCustomerCPF.textContent = order.customer_cpf || 'N/A'; 
+    modalCustomerCPF.textContent = order.address?.cpf ? `CPF: ${order.address.cpf}` : 'N/A';
 
     // Address (Supabase stores as JSONB, so it's an object)
     const address = order.address || {};
@@ -168,18 +170,20 @@ function openOrderModal(orderId) {
     modalAddressZip.textContent = address.cep || '';
 
     // Items
-    modalItems.innerHTML = (order.items || []).map(item => `
+    modalItems.innerHTML = (order.items || []).map(item => {
+        const itemPrice = item.price || (item.price_in_cents / 100) || 0;
+        return `
         <div class="flex gap-3 items-center border-b border-gray-100 last:border-0 pb-2 mb-2 last:pb-0 last:mb-0">
             <img src="${item.image}" class="w-10 h-10 rounded object-cover bg-gray-200">
             <div class="flex-1">
                 <p class="text-sm font-bold text-gray-800 line-clamp-1">${item.title}</p>
                 <p class="text-xs text-gray-500">Tam: ${item.size} | Qtd: ${item.quantity}</p>
             </div>
-            <p class="text-sm font-bold">${formatCurrency(item.price_in_cents * item.quantity)}</p>
+            <p class="text-sm font-bold">${formatCurrency(itemPrice * item.quantity)}</p>
         </div>
-    `).join('');
+    `}).join('');
 
-    modalTotal.textContent = formatCurrency(order.total_in_cents);
+    modalTotal.textContent = formatCurrency((order.total_in_cents || 0) / 100);
 
     orderModal.classList.remove('hidden');
 }

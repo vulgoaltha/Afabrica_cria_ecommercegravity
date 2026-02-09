@@ -12,6 +12,14 @@ const productForm = document.getElementById('productForm');
 const btnNewProduct = document.getElementById('btnNewProduct');
 const modalTitle = document.getElementById('modalTitle');
 const btnSaveText = document.getElementById('btnSaveText');
+const viewNavigation = document.getElementById('viewNavigation');
+const btnBackToFolders = document.getElementById('btnBackToFolders');
+const currentFolderLabel = document.getElementById('currentFolderLabel');
+
+let isEditing = false;
+let currentProductId = null;
+let currentCategory = null; // null = Folders view, slug = Category products view
+let allCategories = [];
 
 // Image Inputs setup
 const imageInputs = [];
@@ -21,9 +29,6 @@ for (let i = 1; i <= 5; i++) {
         preview: document.getElementById(`previewImage${i}`)
     });
 }
-
-let isEditing = false;
-let currentProductId = null;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -62,6 +67,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     loadCategories();
+
+    btnBackToFolders.addEventListener('click', () => {
+        const currentLower = currentCategory?.toLowerCase();
+        let parentKey = Object.keys(PARENTS).find(key =>
+            PARENTS[key].children.map(c => c.toLowerCase()).includes(currentLower)
+        );
+
+        if (parentKey) {
+            currentCategory = parentKey;
+        } else {
+            currentCategory = null;
+        }
+        loadProducts();
+    });
 });
 
 // Load Categories for Select
@@ -75,6 +94,7 @@ async function loadCategories() {
 
         if (error) throw error;
 
+        allCategories = categories; // Store globally for folder view
         categorySelect.innerHTML = '<option value="" disabled selected>Selecione...</option>';
 
         categories.forEach(cat => {
@@ -90,31 +110,77 @@ async function loadCategories() {
     }
 }
 
+// Nesting constants
+const PARENTS = {
+    'cria-do-morro': { title: 'Cria do Morro', children: ['aba-reta', 'trucker'] },
+    'mangueira': { title: 'Mangueira', children: ['mangueira-1', 'mangueira-2'] }
+};
+
 // Load Products
 async function loadProducts() {
     productsGrid.innerHTML = '<div class="col-span-full text-center py-10">Carregando...</div>';
 
-    try {
-        const { data: products, error } = await supabase
-            .from('products')
-            .select('*')
-            .order('created_at', { ascending: false });
+    // Check if current view is a parent folder
+    if (PARENTS[currentCategory]) {
+        viewNavigation.classList.remove('hidden');
+        currentFolderLabel.textContent = PARENTS[currentCategory].title;
+        // Clear loading message before rendering folders to avoid race condition
+        productsGrid.innerHTML = '';
+        renderCategoryFolders(currentCategory);
+        // Removed early return to allow products to load below folders
+    } else if (!currentCategory) {
+        viewNavigation.classList.add('hidden');
+        renderCategoryFolders();
+        return;
+    }
 
+    // Entering a leaf folder (products)
+    viewNavigation.classList.remove('hidden');
+    const catObj = allCategories.find(c => c.slug === currentCategory);
+
+    // Find if this is a child of any parent for consistent navigation
+    const currentLower = currentCategory.toLowerCase();
+    let parentKey = Object.keys(PARENTS).find(key =>
+        PARENTS[key].children.map(c => c.toLowerCase()).includes(currentLower)
+    );
+
+    if (parentKey) {
+        currentFolderLabel.innerHTML = `
+            <span class="cursor-pointer hover:text-black" onclick="currentCategory='${parentKey}'; loadProducts();">${PARENTS[parentKey].title}</span>
+            <span class="mx-2 text-gray-300">/</span>
+            <span>${catObj ? catObj.title : currentCategory}</span>
+        `;
+    } else {
+        currentFolderLabel.textContent = catObj ? catObj.title : currentCategory;
+    }
+
+    try {
+        let query = supabase.from('products').select('*').eq('category', currentCategory);
+        const { data: productsData, error } = await query.order('created_at', { ascending: false });
         if (error) throw error;
 
-        productsGrid.innerHTML = '';
-
-        if (products.length === 0) {
-            productsGrid.innerHTML = `
-                <div class="col-span-full flex flex-col items-center justify-center py-20 text-gray-400">
-                    <p class="text-xl font-bold mb-2">Nenhum produto encontrado</p>
-                    <p class="text-sm">Clique em "+ Novo Produto" para começar</p>
-                </div>
-            `;
-            return;
+        // Clear loading state only if folders haven't been rendered yet or if it's the only content
+        if (productsGrid.innerHTML.includes('Carregando...')) {
+            // If it's a parent category, we should only remove the Carregando text if present, 
+            // but the current structure has it as a div. 
+            // Since we cleared it before renderCategoryFolders, this check is mostly for leaf folders.
+            if (!PARENTS[currentCategory]) productsGrid.innerHTML = '';
+            else {
+                // If it's a parent, just remove the loading div if it somehow persisted
+                const loadingDiv = productsGrid.querySelector('.text-center.py-10');
+                if (loadingDiv && loadingDiv.textContent.includes('Carregando')) {
+                    loadingDiv.remove();
+                }
+            }
         }
 
-        products.forEach(product => {
+        if (productsData.length === 0 && !PARENTS[currentCategory]) {
+            if (currentCategory) {
+                productsGrid.innerHTML += '<div class="col-span-full text-center py-10 text-gray-400">Nenhum produto nesta categoria.</div>';
+            }
+        }
+
+        productsData.forEach(product => {
             renderProductCard(product.id, product);
         });
 
@@ -122,6 +188,60 @@ async function loadProducts() {
         console.error("Erro ao carregar produtos:", error);
         showToast('Erro ao carregar produtos', 'error');
     }
+}
+
+function renderCategoryFolders(parent = null) {
+    if (!parent) productsGrid.innerHTML = '';
+
+    if (allCategories.length === 0) {
+        setTimeout(() => renderCategoryFolders(parent), 500);
+        return;
+    }
+
+    let foldersToShow = [];
+    // Normalize children and parent slugs for robust matching
+    const allChildren = Object.values(PARENTS).flatMap(p => p.children.map(c => c.toLowerCase()));
+    const allParents = Object.keys(PARENTS).map(k => k.toLowerCase());
+
+    if (PARENTS[parent]) {
+        // Show only sub-categories of this parent
+        const childrenSlugs = PARENTS[parent].children.map(c => c.toLowerCase());
+        foldersToShow = allCategories.filter(cat => childrenSlugs.includes(cat.slug.toLowerCase()));
+    } else {
+        // Root view: Filter out ALL children AND parent category slugs (they are virtualized)
+        foldersToShow = allCategories.filter(cat =>
+            !allChildren.includes(cat.slug.toLowerCase()) &&
+            !allParents.includes(cat.slug.toLowerCase())
+        );
+
+        // Add virtual parent folders at the beginning
+        Object.keys(PARENTS).reverse().forEach(slug => {
+            // Check if we should actually show this parent (if any of its children exist)
+            const childrenSlugs = PARENTS[slug].children.map(c => c.toLowerCase());
+            const hasChildren = allCategories.some(cat => childrenSlugs.includes(cat.slug.toLowerCase()));
+
+            if (hasChildren || slug === 'cria-do-morro' || slug === 'mangueira') {
+                foldersToShow.unshift({ title: PARENTS[slug].title, slug: slug, isParent: true });
+            }
+        });
+    }
+
+    foldersToShow.forEach(cat => {
+        const folder = document.createElement('div');
+        folder.className = 'bg-white rounded-xl shadow-sm hover:shadow-md transition-all border border-gray-100 p-6 flex flex-col items-center justify-center cursor-pointer group hover:bg-yellow-50 hover:border-yellow-200';
+        folder.onclick = () => {
+            currentCategory = cat.slug;
+            loadProducts();
+        };
+
+        folder.innerHTML = `
+            <div class="text-5xl mb-4 group-hover:scale-110 transition-transform">${cat.isParent ? '📁' : '📂'}</div>
+            <h3 class="font-bold text-gray-800 text-center">${cat.title}</h3>
+            <p class="text-xs text-gray-400 mt-2 uppercase tracking-wider">Clique para abrir</p>
+        `;
+
+        productsGrid.appendChild(folder);
+    });
 }
 
 // Render Card
@@ -316,6 +436,7 @@ window.editProduct = async (id) => {
         document.getElementById('precoAntigo').value = oldPrice || '';
 
         document.getElementById('category').value = product.category || 'camisetas';
+        document.getElementById('subCategory').value = product.sub_category || '';
         document.getElementById('stock').value = product.stock || 0;
         document.getElementById('description').value = product.description || '';
 
@@ -374,6 +495,11 @@ btnNewProduct.addEventListener('click', () => {
         cb.checked = ['M', 'G', 'GG'].includes(cb.value);
     });
 
+    // Enhancement: Pre-select category if in a folder
+    if (currentCategory) {
+        document.getElementById('category').value = currentCategory;
+    }
+
     productModal.classList.remove('hidden');
 });
 
@@ -408,6 +534,7 @@ productForm.addEventListener('submit', async (e) => {
     const precoAntigo = precoAntigoVal ? parseFloat(precoAntigoVal) : null;
 
     const category = document.getElementById('category').value;
+    const subCategory = document.getElementById('subCategory').value;
     const stock = parseInt(document.getElementById('stock').value) || 0;
     const description = document.getElementById('description').value;
 
@@ -461,6 +588,7 @@ productForm.addEventListener('submit', async (e) => {
             image: mainImage,
             gallery: galleryUrls,
             category: category,
+            sub_category: subCategory,
             description: description,
             stock: stock,
             sizes: selectedSizes,

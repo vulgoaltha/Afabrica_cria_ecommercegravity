@@ -10,6 +10,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { ShoppingCart, Loader2, ArrowLeft, CheckCircle, Minus, Plus, XCircle, ChevronLeft, ChevronRight, Truck } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { AnimatePresence } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 const placeholderImage = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMzc0MTUxIi8+CiAgPHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzlDQTNBRiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pgo8L3N2Zz4K";
 
@@ -213,6 +214,19 @@ function ProductDetailPage() {
         );
     }
 
+    const THEMES: Record<string, { primary: string, secondary: string }> = {
+        'mangueira': { primary: "#EC008C", secondary: "#009543" },
+        'mangueira-1': { primary: "#EC008C", secondary: "#009543" },
+        'mangueira-2': { primary: "#EC008C", secondary: "#009543" },
+        'outros': { primary: "#00F2FE", secondary: "#4FACFE" },
+        'outros-2': { primary: "#F7971E", secondary: "#FFD200" },
+        'outros-3': { primary: "#E0E0E0", secondary: "#BDC3C7" }
+    };
+
+    const itemCategory = product.category?.toLowerCase() || product.sub_category?.toLowerCase() || '';
+    const theme = THEMES[itemCategory];
+    const isThemed = !!theme;
+
     const priceInfo = calculateProductPrices(product, selectedVariant);
     const price = priceInfo.displayPrice;
     const originalPrice = priceInfo.displayOldPrice;
@@ -232,7 +246,13 @@ function ProductDetailPage() {
 
             <div className="min-h-screen bg-preto pt-24 pb-16">
                 <div className="max-w-6xl mx-auto px-4">
-                    <Link to="/" className="inline-flex items-center gap-2 text-gray-400 hover:text-dourado transition-colors mb-8">
+                    <Link
+                        to="/"
+                        className="inline-flex items-center gap-2 text-gray-400 transition-colors mb-8"
+                        style={isThemed ? { transition: 'color 0.3s' } : {}}
+                        onMouseEnter={(e) => { if (isThemed) e.currentTarget.style.color = theme.primary; }}
+                        onMouseLeave={(e) => { if (isThemed) e.currentTarget.style.color = '#9ca3af'; }}
+                    >
                         <ArrowLeft size={18} />
                         Voltar ao Início
                     </Link>
@@ -251,14 +271,20 @@ function ProductDetailPage() {
                                     <>
                                         <button
                                             onClick={handlePrevImage}
-                                            className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-dourado/80 text-white p-3 rounded-full transition-colors backdrop-blur-sm"
+                                            className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 text-white p-3 rounded-full transition-colors backdrop-blur-sm"
+                                            style={isThemed ? { transition: 'background-color 0.3s' } : {}}
+                                            onMouseEnter={(e) => { if (isThemed) e.currentTarget.style.backgroundColor = `${theme.primary}CC`; }}
+                                            onMouseLeave={(e) => { if (isThemed) e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.5)'; }}
                                             aria-label="Imagem anterior"
                                         >
                                             <ChevronLeft size={24} />
                                         </button>
                                         <button
                                             onClick={handleNextImage}
-                                            className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-dourado/80 text-white p-3 rounded-full transition-colors backdrop-blur-sm"
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 text-white p-3 rounded-full transition-colors backdrop-blur-sm"
+                                            style={isThemed ? { transition: 'background-color 0.3s' } : {}}
+                                            onMouseEnter={(e) => { if (isThemed) e.currentTarget.style.backgroundColor = `${theme.primary}CC`; }}
+                                            onMouseLeave={(e) => { if (isThemed) e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.5)'; }}
                                             aria-label="Próxima imagem"
                                         >
                                             <ChevronRight size={24} />
@@ -275,8 +301,11 @@ function ProductDetailPage() {
                                         <button
                                             key={index}
                                             onClick={() => setCurrentImageIndex(index)}
-                                            className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all duration-300 ${index === currentImageIndex ? 'border-dourado scale-105' : 'border-gray-800 hover:border-gray-600'
+                                            className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all duration-300 ${index === currentImageIndex
+                                                ? (isThemed ? `border-[${theme.primary}] scale-105` : 'border-dourado scale-105')
+                                                : 'border-gray-800 hover:border-gray-600'
                                                 }`}
+                                            style={index === currentImageIndex && isThemed ? { borderColor: theme.primary } : {}}
                                         >
                                             <img
                                                 src={imageUrl || placeholderImage}
@@ -296,12 +325,20 @@ function ProductDetailPage() {
 
                             <div className="flex flex-col mb-8 pb-8 border-b border-gray-800">
                                 <div className="flex items-baseline gap-4">
-                                    <span className="text-4xl font-bold text-dourado">{price}</span>
+                                    <span
+                                        className="text-4xl font-bold"
+                                        style={isThemed ? { color: theme.primary } : { color: 'var(--color-gold)' }}
+                                    >
+                                        {price}
+                                    </span>
                                     {priceInfo.hasDiscount && (
                                         <span className="text-2xl text-gray-500 line-through">{originalPrice}</span>
                                     )}
                                 </div>
-                                <span className="text-sm text-[#2dd4bf] font-bold tracking-wide uppercase mt-2">
+                                <span
+                                    className="text-sm font-bold tracking-wide uppercase mt-2"
+                                    style={isThemed ? { color: theme.secondary } : { color: '#2dd4bf' }}
+                                >
                                     6x de {formatCurrency(priceInfo.currentPrice / 6, false)} sem juros
                                 </span>
                             </div>
@@ -318,9 +355,22 @@ function ProductDetailPage() {
                                                 key={size}
                                                 onClick={() => setSelectedSize(size)}
                                                 className={`w-12 h-12 rounded-lg border-2 flex items-center justify-center font-bold text-sm transition-all ${selectedSize === size
-                                                    ? 'border-dourado bg-dourado text-black'
-                                                    : 'border-gray-700 text-gray-400 hover:border-dourado hover:text-dourado'
+                                                    ? (isThemed ? '' : 'border-dourado bg-dourado text-black')
+                                                    : (isThemed ? 'border-gray-700 text-gray-400' : 'border-gray-700 text-gray-400 hover:border-dourado hover:text-dourado')
                                                     }`}
+                                                style={selectedSize === size && isThemed ? { borderColor: theme.primary, backgroundColor: theme.primary, color: '#fff' } : (isThemed ? { borderColor: '#374151', color: '#9ca3af' } : {})}
+                                                onMouseEnter={(e) => {
+                                                    if (isThemed && selectedSize !== size) {
+                                                        e.currentTarget.style.borderColor = theme.primary;
+                                                        e.currentTarget.style.color = theme.primary;
+                                                    }
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    if (isThemed && selectedSize !== size) {
+                                                        e.currentTarget.style.borderColor = '#374151';
+                                                        e.currentTarget.style.color = '#9ca3af';
+                                                    }
+                                                }}
                                             >
                                                 {size}
                                             </button>
@@ -348,7 +398,11 @@ function ProductDetailPage() {
                                 <Button
                                     onClick={handleAddToCart}
                                     size="lg"
-                                    className="flex-1 bg-dourado hover:bg-yellow-500 text-preto font-bold text-lg h-auto py-4 rounded-xl shadow-lg shadow-dourado/10 transition-all hover:scale-[1.02]"
+                                    className={cn(
+                                        "flex-1 font-bold text-lg h-auto py-4 rounded-xl shadow-lg transition-all hover:scale-[1.02]",
+                                        !isThemed && "bg-dourado hover:bg-yellow-500 text-preto shadow-dourado/10"
+                                    )}
+                                    style={isThemed ? { backgroundColor: theme.primary, color: '#fff', boxShadow: `0 10px 15px -3px ${theme.primary}20` } : {}}
                                     disabled={!canAddToCart || (product.purchasable === false)}
                                 >
                                     <ShoppingCart className="mr-2 h-6 w-6" />
@@ -371,7 +425,7 @@ function ProductDetailPage() {
                             {/* Shipping Calculator */}
                             <div className="mt-8 pt-8 border-t border-gray-800">
                                 <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-                                    <Truck size={18} className="text-dourado" /> Calcular Frete e Prazo
+                                    <Truck size={18} style={isThemed ? { color: theme.primary } : {}} className={cn(!isThemed && "text-dourado")} /> Calcular Frete e Prazo
                                 </h3>
                                 <div className="flex gap-2 max-w-sm">
                                     <Input
@@ -401,7 +455,7 @@ function ProductDetailPage() {
                                                 <p className="text-sm font-bold text-white uppercase">{shippingResult.city}</p>
                                                 <p className="text-xs text-gray-400">Entrega em até {shippingResult.deadline}</p>
                                             </div>
-                                            <p className="text-lg font-bold text-dourado">{shippingResult.price}</p>
+                                            <p className="text-lg font-bold" style={isThemed ? { color: theme.primary } : { color: 'var(--color-gold)' }}>{shippingResult.price}</p>
                                         </motion.div>
                                     )}
                                 </AnimatePresence>

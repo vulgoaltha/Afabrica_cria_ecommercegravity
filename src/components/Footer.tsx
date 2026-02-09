@@ -5,7 +5,7 @@ import { Facebook, Instagram, Linkedin, Mail, Phone, MapPin, Send } from 'lucide
 import { useToast } from '@/components/ui/use-toast';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import logo from '@/assets/logo.webp';
+import logo from '@/assets/logo-cria.webp';
 
 const Footer = () => {
     const { toast } = useToast();
@@ -13,7 +13,6 @@ const Footer = () => {
     const quickLinks = [
         { name: 'Home', path: '/' },
         { name: 'Catálogo', path: '/catalogo' },
-        { name: 'Sobre', path: '/sobre' },
         { name: 'Contato', path: '/contato' },
     ];
 
